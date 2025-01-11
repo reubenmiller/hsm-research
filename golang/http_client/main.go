@@ -5,14 +5,36 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	"github.com/ThalesIgnite/crypto11"
 	salpkcs "github.com/salrashid123/mtls_pkcs11/signer/pkcs"
+
+	MQTT "github.com/eclipse/paho.mqtt.golang"
 )
+
+func NewTLSConfig(clientCerts []tls.Certificate) *tls.Config {
+	return &tls.Config{
+		Certificates: clientCerts,
+	}
+}
+
+var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
+	fmt.Printf("TOPIC: %s\n", msg.Topic())
+	fmt.Printf("MSG: %s\n", msg.Payload())
+}
+
+func GetEnv(key string, defaultValue string) string {
+	v := os.Getenv(key)
+	if v != "" {
+		return v
+	}
+	return defaultValue
+}
 
 func main() {
 	// var slotNum *int
@@ -27,6 +49,10 @@ func main() {
 	// 	Pin:        "mynewpin",
 	// }
 
+	pkcsModule := GetEnv("PKCS11_MODULE", "/opt/homebrew/lib/pkcs11/opensc-pkcs11.so")
+	pkcsPin := GetEnv("PKCS11_PIN", "123456")
+	pkcsTokenLabel := GetEnv("PKCS11_TOKENLABEL", "rmi_macos01")
+
 	// yubikey
 	config := &crypto11.Config{
 		// Note: Get token label using the following command:
@@ -38,10 +64,10 @@ func main() {
 		// TokenLabel: "YubiKey PIV #26756662",
 
 		// Option 2: using opensc-pkcs11 library
-		Path:       "/opt/homebrew/lib/pkcs11/opensc-pkcs11.so",
-		TokenLabel: "rmi_macos01",
+		Path:       pkcsModule,
+		TokenLabel: pkcsTokenLabel,
 
-		Pin: "123456",
+		Pin: pkcsPin,
 	}
 
 	// tpm
@@ -57,13 +83,6 @@ func main() {
 	}
 
 	defer ctx.Close()
-
-	// clientCaCert, err := os.ReadFile("ca_scratchpad/ca/root-ca.crt")
-	// if err != nil {
-	// 	log.Fatal(err)
-	// }
-	// clientCaCertPool := x509.NewCertPool()
-	// clientCaCertPool.AppendCertsFromPEM(clientCaCert)
 
 	r, err := salpkcs.NewPKCSCrypto(&salpkcs.PKCS{
 		Context: ctx,
@@ -85,7 +104,6 @@ func main() {
 	}
 	tr := &http.Transport{
 		TLSClientConfig: &tls.Config{
-			// RootCAs:      clientCaCertPool,
 			ServerName:   "certauth.cryptomix.com",
 			Certificates: []tls.Certificate{r.TLSCertificate()},
 		},
@@ -98,7 +116,7 @@ func main() {
 		return
 	}
 
-	htmlData, err := ioutil.ReadAll(resp.Body)
+	htmlData, err := io.ReadAll(resp.Body)
 	if err != nil {
 		fmt.Println(err)
 		return
@@ -106,4 +124,33 @@ func main() {
 	defer resp.Body.Close()
 	fmt.Fprintf(os.Stderr, "Status: %v\n", resp.Status)
 	fmt.Printf("%s\n", htmlData)
+
+	// MQTT client
+	tlsconfig := NewTLSConfig([]tls.Certificate{r.TLSCertificate()})
+
+	opts := MQTT.NewClientOptions()
+	opts.AddBroker("ssl://thin-edge-io.eu-latest.cumulocity.com:8883")
+	opts.SetClientID("rmi_macos01").SetTLSConfig(tlsconfig)
+	opts.SetDefaultPublishHandler(f)
+
+	// Start the connection
+	c := MQTT.NewClient(opts)
+	if token := c.Connect(); token.Wait() && token.Error() != nil {
+		panic(token.Error())
+	}
+
+	c.Subscribe("s/ds", 0, nil).Wait()
+	c.Publish("s/us", 0, false, "500").Wait()
+
+	i := 0
+	for range time.Tick(time.Duration(1) * time.Second) {
+		if i == 5 {
+			break
+		}
+		payload := "400,hsm,\"Event from client using hsm key (golang)\""
+		c.Publish("s/us", 0, false, payload).Wait()
+		i++
+	}
+
+	c.Disconnect(250)
 }
