@@ -5,9 +5,8 @@ package main
 import (
 	"crypto/tls"
 	"fmt"
-	"io"
 	"log"
-	"net/http"
+	"net/url"
 	"os"
 	"time"
 
@@ -24,8 +23,7 @@ func NewTLSConfig(clientCerts []tls.Certificate) *tls.Config {
 }
 
 var f MQTT.MessageHandler = func(client MQTT.Client, msg MQTT.Message) {
-	fmt.Printf("TOPIC: %s\n", msg.Topic())
-	fmt.Printf("MSG: %s\n", msg.Payload())
+	fmt.Printf("Received message. topic=%s, payload=%s\n", msg.Topic(), msg.Payload())
 }
 
 func GetEnv(key string, defaultValue string) string {
@@ -102,34 +100,42 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	tr := &http.Transport{
-		TLSClientConfig: &tls.Config{
-			ServerName:   "certauth.cryptomix.com",
-			Certificates: []tls.Certificate{r.TLSCertificate()},
-		},
-	}
-	client := &http.Client{Transport: tr}
+	// tr := &http.Transport{
+	// 	TLSClientConfig: &tls.Config{
+	// 		ServerName:   "certauth.cryptomix.com",
+	// 		Certificates: []tls.Certificate{r.TLSCertificate()},
+	// 	},
+	// }
+	// client := &http.Client{Transport: tr}
 
-	resp, err := client.Get("https://certauth.cryptomix.com/json/")
-	if err != nil {
-		log.Println(err)
-		return
-	}
+	// resp, err := client.Get("https://certauth.cryptomix.com/json/")
+	// if err != nil {
+	// 	log.Println(err)
+	// 	return
+	// }
 
-	htmlData, err := io.ReadAll(resp.Body)
-	if err != nil {
-		fmt.Println(err)
-		return
-	}
-	defer resp.Body.Close()
-	fmt.Fprintf(os.Stderr, "Status: %v\n", resp.Status)
-	fmt.Printf("%s\n", htmlData)
+	// htmlData, err := io.ReadAll(resp.Body)
+	// if err != nil {
+	// 	fmt.Println(err)
+	// 	return
+	// }
+	// defer resp.Body.Close()
+	// fmt.Fprintf(os.Stderr, "Status: %v\n", resp.Status)
+	// fmt.Printf("%s\n", htmlData)
 
 	// MQTT client
 	tlsconfig := NewTLSConfig([]tls.Certificate{r.TLSCertificate()})
 
 	opts := MQTT.NewClientOptions()
-	opts.AddBroker("ssl://thin-edge-io.eu-latest.cumulocity.com:8883")
+
+	c8yhost := GetEnv("C8Y_HOST", "thin-edge-io.eu-latest.cumulocity.com")
+	if u, err := url.Parse(c8yhost); err == nil {
+		c8yhost = u.Hostname()
+	}
+
+	mqttHost := fmt.Sprintf("ssl://%s:8883", c8yhost)
+	fmt.Printf("Connecting to MQTT Broker: %s\n", mqttHost)
+	opts.AddBroker(mqttHost)
 	opts.SetClientID("rmi_macos01").SetTLSConfig(tlsconfig)
 	opts.SetDefaultPublishHandler(f)
 
@@ -144,11 +150,12 @@ func main() {
 
 	i := 0
 	for range time.Tick(time.Duration(1) * time.Second) {
-		if i == 5 {
+		if i == 1 {
 			break
 		}
 		payload := "400,hsm,\"Event from client using hsm key (golang)\""
 		c.Publish("s/us", 0, false, payload).Wait()
+		fmt.Printf("Published event to Cumulocity. payload=%s\n", payload)
 		i++
 	}
 
