@@ -128,7 +128,7 @@ func main() {
 
 	opts := MQTT.NewClientOptions()
 
-	c8yhost := GetEnv("C8Y_HOST", "thin-edge-io.eu-latest.cumulocity.com")
+	c8yhost := GetEnv("C8Y_DOMAIN", "thin-edge-io.eu-latest.cumulocity.com")
 	if u, err := url.Parse(c8yhost); err == nil {
 		c8yhost = u.Hostname()
 	}
@@ -136,7 +136,7 @@ func main() {
 	mqttHost := fmt.Sprintf("ssl://%s:8883", c8yhost)
 	fmt.Printf("Connecting to MQTT Broker: %s\n", mqttHost)
 	opts.AddBroker(mqttHost)
-	opts.SetClientID("rmi_macos01").SetTLSConfig(tlsconfig)
+	opts.SetClientID(GetEnv("DEVICE_ID", "rmi_macos01")).SetTLSConfig(tlsconfig)
 	opts.SetDefaultPublishHandler(f)
 
 	// Start the connection

@@ -52,7 +52,8 @@ The following starts an MQTT client which connects to the Cumulocity MQTT Broker
 1. Configure the following environment variables
 
     ```sh
-    export C8Y_HOST=thin-edge-io.eu-latest.cumulocity.com
+    export DEVICE_ID="<device_id/cert_common_name>"
+    export C8Y_DOMAIN=thin-edge-io.eu-latest.cumulocity.com
     export PKCS11_MODULE=/opt/homebrew/lib/libykcs11.dylib
     export PKCS11_PIN="123456"
     export PKCS11_TOKENLABEL=
