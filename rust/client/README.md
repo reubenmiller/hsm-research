@@ -42,8 +42,6 @@ Before you can run the test application, you need to run the following steps to 
     ```sh
     pkcs11-tool --list-token-slots --module /opt/homebrew/lib/libykcs11.dylib
     ```
-    
-    Take note of the "token label" field which will be required when running the test application
 
 ### Running the application
 

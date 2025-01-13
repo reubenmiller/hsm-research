@@ -56,7 +56,7 @@ The following starts an MQTT client which connects to the Cumulocity MQTT Broker
     export C8Y_DOMAIN=thin-edge-io.eu-latest.cumulocity.com
     export PKCS11_MODULE=/opt/homebrew/lib/libykcs11.dylib
     export PKCS11_PIN="123456"
-    export PKCS11_TOKENLABEL=
+    export PKCS11_TOKENLABEL="<tokenlabel>"
     ```
 
 2. Run the test application
