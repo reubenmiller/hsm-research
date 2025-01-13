@@ -1,0 +1,18 @@
+[package]
+name = "client"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+anyhow = "1.0.95"
+color-backtrace = "0.6.1"
+cryptoki = "0.8.0"
+hyper-rustls = { version = "0.27.5" }
+pretty_env_logger = "0.5.0"
+rumqttc = { version = "0.24.0" }
+rustls-native-certs = "0.8.1"
+tokio = "1.43.0"
+tokio-rustls = {version = "0.26.1", default-features = true, features = [
+    "ring"
+]} 
+x509-parser = "0.16.0"
