@@ -88,6 +88,7 @@ pkcs11 = pkcs11_section
 
 [pkcs11_section]
 engine_id = pkcs11
+dynamic_path = /opt/homebrew/Cellar/openssl@3/3.4.0/lib/engines-3/pkcs11.dylib
 MODULE_PATH = /opt/homebrew/lib/pkcs11/opensc-pkcs11.so
 ```
 
