@@ -66,7 +66,7 @@ pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II;serial=b98efbc09b13980d;to
 Or you might have some luck with the following one-liner to get the URL that need to match to the private keys (assuming the label includes the certificate's common name used by thin-edge.io):
 
 ```sh
-p11tool --login --list-privkeys 2>/dev/null "$(p11tool --login --list-privkeys 2>/dev/null | grep --fixed-strings "$(tedge config get device.id)")" | grep "URL:" | awk -F ' ' '{print $2 + ";pin-value=123456"}'
+p11tool --login --list-privkeys 2>/dev/null "$(p11tool --login --list-privkeys 2>/dev/null | grep --fixed-strings "$(tedge config get device.id)")" | grep "URL:" | awk -F ' ' '{print $2 ";pin-value=123456"}'
 ```
 
 *Example Output*
