@@ -5,12 +5,22 @@ edition = "2021"
 
 [dependencies]
 anyhow = "1.0.95"
+asn1 = "0.20.0"
+asn1-rs = {version = "0.7.0", features = ["bigint"]}
+aws-lc-rs = "1.12.1"
+base64 = "0.22.1"
 color-backtrace = "0.6.1"
 cryptoki = "0.8.0"
+der = {version = "0.7.9", features = [
+    "derive",
+]}
+ecdsa = { version = "0.16.9", features = ["signing", "der"] }
 hyper-rustls = { version = "0.27.5" }
+num-bigint = "0.4.6"
 pretty_env_logger = "0.5.0"
 rumqttc = { version = "0.24.0" }
 rustls-native-certs = "0.8.1"
+simple_asn1 = "0.6.3"
 tokio = "1.43.0"
 tokio-rustls = {version = "0.26.1", default-features = true, features = [
     "ring"
