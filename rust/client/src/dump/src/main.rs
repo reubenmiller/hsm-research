@@ -59,7 +59,8 @@ fn main() -> std::result::Result<(), Box<dyn Error>> {
     // from Rust
     println!("\nRust:");
     // let contents = BASE64_URL_SAFE_NO_PAD.decode("MEQCIPFSCZdGRTn9G45inZzIT3JNuH68pBDg8Pl8K4t9dNGnAiAce6ii6WCnjVw4Ivok0YTglV7fMuov1Fj5uKCAxhK6dA").unwrap();
-    let contents = BASE64_STANDARD_NO_PAD.decode("MEQCINiBY3zJubPBnBeIJ+P75sav/5Ophp7TLLtc0sLE4oogAiCPrYHs+Amfc/Sq+1DsQ/GARR21SZmplp/e1hNH/gay1A").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCILwnIQzvAQVjgu8a14gF9IlSfkSuvpqeWqwG+ig8n7y8AiAusVDwRIludPQ2IqydZpij1RXEDtuVl10rUAzH860uBQ").unwrap();
+    let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIAn5Hr8Fcj5hQXGjy/sm5G1Iex7bwf0x30saNX7AkDJ5AiD43qIJ9AAiWqi4P11+mN5eOgp2cw1adbgbQ9wfVqdKiA").unwrap();
     print_der(&contents, 1, &ctx);
 
     // for filename in env::args().skip(1) {
