@@ -91,17 +91,29 @@ impl MySigner {
     }
 }
 
+fn write_asn1_integer(writer: &mut dyn std::io::Write, b: &[u8]) {
+    let mut i = asn1_rs::BigInt::from_signed_bytes_be(&b);
+    if i.sign() == asn1_rs::Sign::Minus {
+        // Prepend a most significant zero byte if value < 0
+        let mut positive = b.to_vec();
+        positive.insert(0, 0);
+
+        i = asn1_rs::BigInt::from_signed_bytes_be(&positive);
+    }
+    let i = i.to_signed_bytes_be();
+    let i = asn1_rs::Integer::new(&i);
+    let _ = i.write_der(writer);
+}
+
 fn format_asn1_ecdsa_signature(
     r_bytes: &[u8],
     s_bytes: &[u8],
 ) -> Result<Vec<u8>, der::Error> {
     let mut writer = Vec::new();
 
-    let r = asn1_rs::Integer::new(r_bytes);
-    let _ = r.write_der(&mut writer);
+    write_asn1_integer(&mut writer, r_bytes);
 
-    let s = asn1_rs::Integer::new(s_bytes);
-    let _ = s.write_der(&mut writer);
+    write_asn1_integer(&mut writer, s_bytes);
 
     let seq = asn1_rs::Sequence::new(writer.into());
     let b = seq.to_der_vec().unwrap();
@@ -184,7 +196,7 @@ impl Signer for MySigner {
         );
 
         // Optional
-        let direct_sign = false;
+        let direct_sign = true;
 
         let signature_raw = if direct_sign {
             let signature_raw = match session.sign(&mechanism, key, &message) {
@@ -204,6 +216,7 @@ impl Signer for MySigner {
         let r_bytes = signature_raw[0..32].to_vec();
         let s_bytes = signature_raw[32..].to_vec();
         let signature_asn1 = format_asn1_ecdsa_signature(&r_bytes, &s_bytes).unwrap();
+        println!("Encoded ASN.1 Signature: len={:?} {:?}", signature_asn1.len(), signature_asn1);
         Ok(signature_asn1)
     }
 
@@ -253,7 +266,6 @@ impl SigningKey for MySigningKey {
     }
 
     fn algorithm(&self) -> SignatureAlgorithm {
-        // SignatureAlgorithm::RSA
         SignatureAlgorithm::ECDSA
     }
 }
@@ -519,19 +531,13 @@ fn test_signature_encoding_case1() {
 #[test]
 fn test_signature_encoding_case2() {
     // case 2: golang does not have prefixed 0x00 values in r and s values, length is 32 bytes
-    let signature_raw: [u8; 64] = [
-        76, 98, 169, 50, 155, 237, 19, 2, 47, 194, 117, 54, 102, 66, 2, 7, 143, 173, 96, 161, 32,
-        84, 100, 160, 15, 135, 115, 87, 127, 250, 0, 82, 18, 193, 222, 211, 47, 153, 133, 123, 138,
-        79, 154, 174, 232, 51, 124, 50, 183, 166, 82, 231, 7, 65, 204, 200, 102, 130, 99, 62, 58,
-        75, 85, 87,
-    ];
-    let golang_output = String::from("MEQCIExiqTKb7RMCL8J1NmZCAgePrWChIFRkoA+Hc1d/+gBSAiASwd7TL5mFe4pPmq7oM3wyt6ZS5wdBzMhmgmM+OktVVw");
+    let signature_raw: [u8; 64] = [219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
+    let golang_output: [u8; 71] = [48, 69, 2, 33, 0, 219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 2, 32, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
 
     let r_bytes = signature_raw[0..32].to_vec();
     let s_bytes = signature_raw[32..].to_vec();
 
     let sig_encoded = format_asn1_ecdsa_signature(&r_bytes, &s_bytes).unwrap();
-    let rust_output = BASE64_STANDARD_NO_PAD.encode(sig_encoded);
 
-    assert_eq!(rust_output, golang_output);
+    assert_eq!(format!("{:x?}", sig_encoded) , format!("{:x?}", golang_output));
 }
