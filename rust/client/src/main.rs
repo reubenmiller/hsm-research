@@ -213,6 +213,7 @@ impl Signer for MySigner {
         };
 
         // Split raw signature into r and s values (assuming 32 bytes each)
+        println!("Signature (raw) len={:?}", signature_raw.len());
         let r_bytes = signature_raw[0..32].to_vec();
         let s_bytes = signature_raw[32..].to_vec();
         let signature_asn1 = format_asn1_ecdsa_signature(&r_bytes, &s_bytes).unwrap();
@@ -237,6 +238,8 @@ impl MySigningKey {
             SignatureScheme::RSA_PKCS1_SHA256,
             SignatureScheme::RSA_PKCS1_SHA384,
             SignatureScheme::RSA_PKCS1_SHA512,
+
+            SignatureScheme::RSA_PSS_SHA256,
 
             SignatureScheme::ECDSA_NISTP256_SHA256,
             SignatureScheme::ECDSA_NISTP384_SHA384,
