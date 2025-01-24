@@ -53,14 +53,23 @@ fn main() -> std::result::Result<(), Box<dyn Error>> {
     // let contents = BASE64_URL_SAFE_NO_PAD.decode("MEQCIQCauL6ud7MxubZq6jOOWyJxI3EEaSTtb22wMGpCqJXkZgIfE0DCV5YaYD5kselE6XZyGyHcl8QpLJZv9Vts1yXfeg").unwrap();
     // let contents = BASE64_STANDARD_NO_PAD.decode("MEYCIQDIPSGZbomiqf1v+rMy9TZGUxld+Ryw5p9mwbpVuTleiQIhAM8Mu6a6YeGqdRPGgR8LFxbr8Sbw4sResP50ZDHaHeZ3").unwrap();
     // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIExiqTKb7RMCL8J1NmZCAgePrWChIFRkoA+Hc1d/+gBSAiASwd7TL5mFe4pPmq7oM3wyt6ZS5wdBzMhmgmM+OktVVw").unwrap();
-    let contents = BASE64_STANDARD_NO_PAD.decode("MEYCIQCOZggcnwrTRGQRJwZxvYQVFIs3sy0j0Q27IizYBV8rbAIhAIGYeKJd6beVc2pxmlkNPiqoA8G1Hzspx5lApycCQVBN").unwrap();
+    let contents = BASE64_STANDARD_NO_PAD.decode("MEUCIQDblnCsiLQi4e2htpUUzc3lOzDNOOtNXSbFXcAbdnlMCgIgf76e6vZpWT3uA/hkH0Da8q9LDMX/pOaRgbbtXWrZpts").unwrap();
     print_der(&contents, 1, &ctx);
+
+    println!("");
+    // raw_signature = [219 150 112 172 136 180 34 225 237 161 182 149 20 205 205 229 59 48 205 56 235 77 93 38 197 93 192 27 118 121 76 10 127 190 158 234 246 105 89 61 238 3 248 100 31 64 218 242 175 75 12 197 255 164 230 145 129 182 237 93 106 217 166 219]
+    // ASN.1 encoded = [48 69 2 33 0 219 150 112 172 136 180 34 225 237 161 182 149 20 205 205 229 59 48 205 56 235 77 93 38 197 93 192 27 118 121 76 10 2 32 127 190 158 234 246 105 89 61 238 3 248 100 31 64 218 242 175 75 12 197 255 164 230 145 129 182 237 93 106 217 166 219]
+    let contents: [u8; 71] = [48, 69, 2, 33, 0, 219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 2, 32, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
+    print_der(&contents, 1, &ctx);
+    // let signature_raw: [u8; 64] = [219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
+
 
     // from Rust
     println!("\nRust:");
     // let contents = BASE64_URL_SAFE_NO_PAD.decode("MEQCIPFSCZdGRTn9G45inZzIT3JNuH68pBDg8Pl8K4t9dNGnAiAce6ii6WCnjVw4Ivok0YTglV7fMuov1Fj5uKCAxhK6dA").unwrap();
     // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCILwnIQzvAQVjgu8a14gF9IlSfkSuvpqeWqwG+ig8n7y8AiAusVDwRIludPQ2IqydZpij1RXEDtuVl10rUAzH860uBQ").unwrap();
-    let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIAn5Hr8Fcj5hQXGjy/sm5G1Iex7bwf0x30saNX7AkDJ5AiD43qIJ9AAiWqi4P11+mN5eOgp2cw1adbgbQ9wfVqdKiA").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIAn5Hr8Fcj5hQXGjy/sm5G1Iex7bwf0x30saNX7AkDJ5AiD43qIJ9AAiWqi4P11+mN5eOgp2cw1adbgbQ9wfVqdKiA").unwrap();
+    let contents = BASE64_STANDARD_NO_PAD.decode("MEQCICJdXsk1+9jErnA7CMWwBRkIVTsC+2Oq41MKo1d6iBFQAiAovqfbqwDdhUnvDsRBwtWxIB1TE3+8wDu2o+KSu5K0RA").unwrap();
     print_der(&contents, 1, &ctx);
 
     // for filename in env::args().skip(1) {
