@@ -1,0 +1,12 @@
+[package]
+name = "dump"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+asn1-rs = {version = "0.7.0", features = ["num-bigint", "serialize"]}
+base64 = "0.22.1"
+colored = "3.0"
+hex-literal = "0.4"
+pem = "3.0"
+trybuild = "1.0"

@@ -8,6 +8,7 @@ import (
 	"log"
 	"net/url"
 	"os"
+	"strings"
 	"time"
 
 	"github.com/ThalesIgnite/crypto11"
@@ -129,7 +130,10 @@ func main() {
 	opts := MQTT.NewClientOptions()
 
 	c8yhost := GetEnv("C8Y_DOMAIN", "thin-edge-io.eu-latest.cumulocity.com")
-	if u, err := url.Parse(c8yhost); err == nil {
+	if !strings.Contains(c8yhost, "://") {
+		c8yhost = fmt.Sprintf("https://%s", c8yhost)
+	}
+	if u, err := url.Parse(c8yhost); err == nil && u.Hostname() != "" {
 		c8yhost = u.Hostname()
 	}
 

@@ -1,0 +1,266 @@
+use asn1_rs::{Any, Class, FromDer, Length, Result, Tag};
+use colored::*;
+// use asn1_rs::nom::
+use asn1_rs::nom::HexDisplay;
+// use oid_registry::{format_oid, Oid as DerOid, OidRegistry};
+use std::cmp::min;
+use std::error::Error;
+use std::marker::PhantomData;
+use std::{env, fs};
+use base64::prelude::*;
+
+struct Context<'a> {
+    // oid_registry: OidRegistry<'a>,
+    hex_max: usize,
+    t: PhantomData<&'a ()>,
+}
+
+impl<'a> Default for Context<'a> {
+    fn default() -> Self {
+        // let oid_registry = OidRegistry::default().with_all_crypto().with_x509();
+        Context {
+            // oid_registry,
+            hex_max: 64,
+            t: PhantomData,
+        }
+    }
+}
+
+#[macro_export]
+macro_rules! indent_println {
+    ( $depth: expr, $fmt:expr ) => {
+        println!(concat!("{:indent$}",$fmt), "", indent = 2*$depth)
+    };
+    ( $depth: expr, $fmt:expr, $( $x:expr ),* ) => {
+        println!(concat!("{:indent$}",$fmt), "", $($x),*, indent = 2*$depth)
+    };
+}
+
+#[allow(dead_code)]
+pub fn print_hex_dump(bytes: &[u8], max_len: usize) {
+    let m = min(bytes.len(), max_len);
+    print!("{}", &bytes[..m].to_hex(16));
+    if bytes.len() > max_len {
+        println!("... <continued>");
+    }
+}
+
+fn main() -> std::result::Result<(), Box<dyn Error>> {
+    let ctx = Context::default();
+
+    // from golang
+    println!("\ngolang:");
+    // let contents = BASE64_URL_SAFE_NO_PAD.decode("MEQCIQCauL6ud7MxubZq6jOOWyJxI3EEaSTtb22wMGpCqJXkZgIfE0DCV5YaYD5kselE6XZyGyHcl8QpLJZv9Vts1yXfeg").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEYCIQDIPSGZbomiqf1v+rMy9TZGUxld+Ryw5p9mwbpVuTleiQIhAM8Mu6a6YeGqdRPGgR8LFxbr8Sbw4sResP50ZDHaHeZ3").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIExiqTKb7RMCL8J1NmZCAgePrWChIFRkoA+Hc1d/+gBSAiASwd7TL5mFe4pPmq7oM3wyt6ZS5wdBzMhmgmM+OktVVw").unwrap();
+    let contents = BASE64_STANDARD_NO_PAD.decode("MEUCIQDblnCsiLQi4e2htpUUzc3lOzDNOOtNXSbFXcAbdnlMCgIgf76e6vZpWT3uA/hkH0Da8q9LDMX/pOaRgbbtXWrZpts").unwrap();
+    print_der(&contents, 1, &ctx);
+
+    println!("");
+    // raw_signature = [219 150 112 172 136 180 34 225 237 161 182 149 20 205 205 229 59 48 205 56 235 77 93 38 197 93 192 27 118 121 76 10 127 190 158 234 246 105 89 61 238 3 248 100 31 64 218 242 175 75 12 197 255 164 230 145 129 182 237 93 106 217 166 219]
+    // ASN.1 encoded = [48 69 2 33 0 219 150 112 172 136 180 34 225 237 161 182 149 20 205 205 229 59 48 205 56 235 77 93 38 197 93 192 27 118 121 76 10 2 32 127 190 158 234 246 105 89 61 238 3 248 100 31 64 218 242 175 75 12 197 255 164 230 145 129 182 237 93 106 217 166 219]
+    let contents: [u8; 71] = [48, 69, 2, 33, 0, 219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 2, 32, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
+    print_der(&contents, 1, &ctx);
+    // let signature_raw: [u8; 64] = [219, 150, 112, 172, 136, 180, 34, 225, 237, 161, 182, 149, 20, 205, 205, 229, 59, 48, 205, 56, 235, 77, 93, 38, 197, 93, 192, 27, 118, 121, 76, 10, 127, 190, 158, 234, 246, 105, 89, 61, 238, 3, 248, 100, 31, 64, 218, 242, 175, 75, 12, 197, 255, 164, 230, 145, 129, 182, 237, 93, 106, 217, 166, 219];
+
+
+    // from Rust
+    println!("\nRust:");
+    // let contents = BASE64_URL_SAFE_NO_PAD.decode("MEQCIPFSCZdGRTn9G45inZzIT3JNuH68pBDg8Pl8K4t9dNGnAiAce6ii6WCnjVw4Ivok0YTglV7fMuov1Fj5uKCAxhK6dA").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCILwnIQzvAQVjgu8a14gF9IlSfkSuvpqeWqwG+ig8n7y8AiAusVDwRIludPQ2IqydZpij1RXEDtuVl10rUAzH860uBQ").unwrap();
+    // let contents = BASE64_STANDARD_NO_PAD.decode("MEQCIAn5Hr8Fcj5hQXGjy/sm5G1Iex7bwf0x30saNX7AkDJ5AiD43qIJ9AAiWqi4P11+mN5eOgp2cw1adbgbQ9wfVqdKiA").unwrap();
+    let contents = BASE64_STANDARD_NO_PAD.decode("MEQCICJdXsk1+9jErnA7CMWwBRkIVTsC+2Oq41MKo1d6iBFQAiAovqfbqwDdhUnvDsRBwtWxIB1TE3+8wDu2o+KSu5K0RA").unwrap();
+    print_der(&contents, 1, &ctx);
+
+    // for filename in env::args().skip(1) {
+    //     eprintln!("File: {}", filename);
+    //     let content = fs::read(&filename)?;
+    //     // check for PEM file
+    //     if filename.ends_with(".pem") || content.starts_with(b"----") {
+    //         let pems = pem::parse_many(&content).expect("Parsing PEM failed");
+    //         if pems.is_empty() {
+    //             eprintln!("{}", "No PEM section decoded".bright_red());
+    //             continue;
+    //         }
+    //         for (idx, pem) in pems.iter().enumerate() {
+    //             eprintln!("Pem entry {} [{}]", idx, pem.tag().bright_blue());
+    //             print_der(pem.contents(), 1, &ctx);
+    //         }
+    //     } else {
+    //         print_der(&content, 1, &ctx);
+    //     }
+    // }
+
+    Ok(())
+}
+
+fn print_der(i: &[u8], depth: usize, ctx: &Context) {
+    match Any::from_der(i) {
+        Ok((rem, any)) => {
+            print_der_any(any, depth, ctx);
+            if !rem.is_empty() {
+                let warning = format!("WARNING: {} extra bytes after object", rem.len());
+                indent_println!(depth, "{}", warning.bright_red());
+                print_hex_dump(rem, ctx.hex_max);
+            }
+        }
+        Err(e) => {
+            eprintln!("Error while parsing at depth {}: {:?}", depth, e);
+        }
+    }
+}
+
+fn print_der_result_any(r: Result<Any>, depth: usize, ctx: &Context) {
+    match r {
+        Ok(any) => print_der_any(any, depth, ctx),
+        Err(e) => {
+            eprintln!("Error while parsing at depth {}: {:?}", depth, e);
+        }
+    }
+}
+
+fn print_der_any(any: Any, depth: usize, ctx: &Context) {
+    let class = match any.header.class() {
+        Class::Universal => "UNIVERSAL".to_string().white(),
+        c => c.to_string().cyan(),
+    };
+    let hdr = format!(
+        "[c:{} t:{}({}) l:{}]",
+        class,
+        any.header.tag().0,
+        any.header.tag().to_string().white(),
+        str_of_length(any.header.length())
+    );
+    indent_println!(depth, "{}", hdr);
+    match any.header.class() {
+        Class::Universal => (),
+        Class::ContextSpecific | Class::Application => {
+            // attempt to decode inner object (if EXPLICIT)
+            match Any::from_der(any.data) {
+                Ok((rem2, inner)) => {
+                    indent_println!(
+                        depth + 1,
+                        "{} (rem.len={})",
+                        format!("EXPLICIT [{}]", any.header.tag().0).green(),
+                        // any.header.tag.0,
+                        rem2.len()
+                    );
+                    print_der_any(inner, depth + 2, ctx);
+                }
+                Err(_) => {
+                    // assume tagged IMPLICIT
+                    indent_println!(
+                        depth + 1,
+                        "{}",
+                        "could not decode (IMPLICIT tagging?)".bright_red()
+                    );
+                }
+            }
+            return;
+        }
+        _ => {
+            indent_println!(
+                depth + 1,
+                "tagged: [{}] {}",
+                any.header.tag().0,
+                "*NOT SUPPORTED*".red()
+            );
+            return;
+        }
+    }
+    match any.header.tag() {
+        Tag::BitString => {
+            let b = any.bitstring().unwrap();
+            indent_println!(depth + 1, "BITSTRING");
+            print_hex_dump(b.as_ref(), ctx.hex_max);
+        }
+        Tag::Boolean => {
+            let b = any.bool().unwrap();
+            indent_println!(depth + 1, "BOOLEAN: {}", b.to_string().green());
+        }
+        Tag::EmbeddedPdv => {
+            let e = any.embedded_pdv().unwrap();
+            indent_println!(depth + 1, "EMBEDDED PDV: {:?}", e);
+            print_hex_dump(e.data_value, ctx.hex_max);
+        }
+        Tag::Enumerated => {
+            let i = any.enumerated().unwrap();
+            indent_println!(depth + 1, "ENUMERATED: {}", i.0);
+        }
+        Tag::GeneralizedTime => {
+            let s = any.generalizedtime().unwrap();
+            indent_println!(depth + 1, "GeneralizedTime: {}", s);
+        }
+        Tag::GeneralString => {
+            let s = any.generalstring().unwrap();
+            indent_println!(depth + 1, "GeneralString: {}", s.as_ref());
+        }
+        Tag::Ia5String => {
+            let s = any.ia5string().unwrap();
+            indent_println!(depth + 1, "IA5String: {}", s.as_ref());
+        }
+        Tag::Integer => {
+            let i = any.integer().unwrap();
+            match i.as_i128() {
+                Ok(i) => {
+                    indent_println!(depth + 1, "{}", i);
+                }
+                Err(_) => {
+                    print_hex_dump(i.as_ref(), ctx.hex_max);
+                }
+            }
+        }
+        Tag::Null => (),
+        Tag::OctetString => {
+            let b = any.octetstring().unwrap();
+            indent_println!(depth + 1, "OCTETSTRING");
+            print_hex_dump(b.as_ref(), ctx.hex_max);
+        }
+        Tag::Oid => {
+            let oid = any.oid().unwrap();
+            // let der_oid = DerOid::new(oid.as_bytes().into());
+            // let s = format_oid(&der_oid, &ctx.oid_registry).cyan();
+            let s = oid.to_string().cyan();
+            indent_println!(depth + 1, "OID: {}", s);
+        }
+        Tag::PrintableString => {
+            let s = any.printablestring().unwrap();
+            indent_println!(depth + 1, "PrintableString: {}", s.as_ref());
+        }
+        Tag::RelativeOid => {
+            let oid = any.oid().unwrap();
+            // let der_oid = DerOid::new(oid.as_bytes().into());
+            // let s = format_oid(&der_oid, &ctx.oid_registry).cyan();
+            let s = oid.to_string().cyan();
+            indent_println!(depth + 1, "RELATIVE-OID: {}", s);
+        }
+        Tag::Set => {
+            let seq = any.set().unwrap();
+            for item in seq.der_iter::<Any, asn1_rs::Error>() {
+                print_der_result_any(item, depth + 1, ctx);
+            }
+        }
+        Tag::Sequence => {
+            let seq = any.sequence().unwrap();
+            for item in seq.der_iter::<Any, asn1_rs::Error>() {
+                print_der_result_any(item, depth + 1, ctx);
+            }
+        }
+        Tag::UtcTime => {
+            let s = any.utctime().unwrap();
+            indent_println!(depth + 1, "UtcTime: {}", s);
+        }
+        Tag::Utf8String => {
+            let s = any.utf8string().unwrap();
+            indent_println!(depth + 1, "UTF-8: {}", s.as_ref());
+        }
+        _ => unimplemented!("unsupported tag {}", any.header.tag()),
+    }
+}
+
+fn str_of_length(l: Length) -> String {
+    match l {
+        Length::Definite(l) => l.to_string(),
+        Length::Indefinite => "Indefinite".to_string(),
+    }
+}
