@@ -343,7 +343,6 @@ async fn main() -> Result<(), Box<dyn Error>> {
     pretty_env_logger::init();
     color_backtrace::install();
 
-    // Alternative module: /opt/homebrew/lib/pkcs11/opensc-pkcs11.so
     let pkcs11module = std::env::var("PKCS11_MODULE");
     let pkcs11module = pkcs11module
         .as_deref()
@@ -353,7 +352,11 @@ async fn main() -> Result<(), Box<dyn Error>> {
 
     let slot = pkcs11client.get_slots_with_token()?.remove(0);
     let session = pkcs11client.open_ro_session(slot)?;
-    session.login(UserType::User, Some(&AuthPin::new("123456".into())))?;
+    let pkcs11pin = std::env::var("PKCS11_PIN");
+    let pkcs11pin = pkcs11pin
+        .as_deref()
+        .unwrap_or("123456");
+    session.login(UserType::User, Some(&AuthPin::new(pkcs11pin.into())))?;
 
     // Debug
     let search = vec![
