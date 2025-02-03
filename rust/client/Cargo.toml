@@ -13,12 +13,23 @@ der = { version = "0.7.9", features = [
     "derive",
     "oid",
 ]}
-hyper-rustls = { version = "0.27.5" }
+hyper-rustls = { version = "0.27.5", default-features = false, features = [
+    "ring",
+    "http1",
+    "log",
+    "logging",
+    "native-tokio",
+    "rustls-native-certs",
+    "tls12",
+]}
 pretty_env_logger = "0.5.0"
+ring = "0.17.7"
 rumqttc = { version = "0.24.0" }
 rustls-native-certs = "0.8.1"
 tokio = "1.43.0"
-tokio-rustls = {version = "0.26.1", default-features = true, features = [
-    "ring"
+tokio-rustls = {version = "0.26.1", default-features = false, features = [
+    "logging",
+    "tls12",
+    "ring",
 ]} 
 x509-parser = "0.16.0"
