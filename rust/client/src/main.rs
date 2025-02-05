@@ -4,9 +4,11 @@
 
 use std::error::Error;
 use std::sync::{Arc, Mutex};
+use log;
 
 use asn1_rs::ToDer;
 use base64::prelude::*;
+use cryptoki::object::KeyType;
 use der::asn1::{AnyRef, ObjectIdentifier};
 use der::Sequence;
 use rumqttc::tokio_rustls::rustls::ClientConfig;
@@ -24,6 +26,7 @@ use cryptoki::{
 };
 
 // Only used when loading certs from file
+#[allow(unused_imports)]
 use rumqttc::tokio_rustls::rustls::pki_types::pem::PemObject;
 
 use rumqttc::{AsyncClient, MqttOptions};
@@ -43,14 +46,14 @@ struct PKCS11 {
 }
 
 #[derive(Debug)]
-struct MySigner {
+struct PkcsSigner {
     pkcs11: PKCS11,
     scheme: SignatureScheme,
 }
 
-impl MySigner {
+impl PkcsSigner {
     fn get_mechanism(&self) -> anyhow::Result<Mechanism, RusTLSError> {
-        println!("Getting mechanism from chosen scheme: {:?}", self.scheme);
+        log::debug!("Getting mechanism from chosen scheme: {:?}", self.scheme);
         match self.scheme {
             SignatureScheme::ED25519 => Ok(Mechanism::Eddsa),
             SignatureScheme::ECDSA_NISTP256_SHA256 => Ok(Mechanism::EcdsaSha256),
@@ -117,11 +120,11 @@ fn format_asn1_ecdsa_signature(
 
     let seq = asn1_rs::Sequence::new(writer.into());
     let b = seq.to_der_vec().unwrap();
-    println!("Encoded ASN.1 Der: {:?}", BASE64_STANDARD_NO_PAD.encode(&b));
+    log::debug!("Encoded ASN.1 Der: {:?}", BASE64_STANDARD_NO_PAD.encode(&b));
     Ok(b)
 }
 
-impl Signer for MySigner {
+impl Signer for PkcsSigner {
     fn sign(&self, message: &[u8]) -> anyhow::Result<Vec<u8>, RusTLSError> {
         let session = self.pkcs11.session.lock().unwrap();
 
@@ -129,7 +132,6 @@ impl Signer for MySigner {
             Attribute::Token(true),
             Attribute::Private(true),
             Attribute::Sign(true),
-            // Attribute::KeyType(KeyType::EC),
         ];
 
         let key = session
@@ -139,108 +141,73 @@ impl Signer for MySigner {
             .nth(0)
             .unwrap();
 
-        let info = session.get_attributes(
-            key,
-            &[
-                AttributeType::Id,
-                AttributeType::Class,
-                AttributeType::AcIssuer,
-                AttributeType::Application,
-                AttributeType::Label,
-                AttributeType::Coefficient,
-                AttributeType::KeyType,
-                AttributeType::Issuer,
-                AttributeType::Url,
-            ],
-        );
-        println!("");
-        match info {
-            Ok(value) => {
-                for v in &value[0..value.len() - 1] {
-                    match v {
-                        Attribute::Application(raw_value) => println!(
-                            "Private Key Application: {:?}",
-                            String::from_utf8_lossy(raw_value)
-                        ),
-                        Attribute::Label(raw_value) => println!(
-                            "Private Key Label: {:?}",
-                            String::from_utf8_lossy(raw_value)
-                        ),
-                        Attribute::Id(raw_value) => {
-                            println!("Private Key Id: {:?}", String::from_utf8_lossy(raw_value))
-                        }
-                        Attribute::Issuer(raw_value) => println!(
-                            "Private Key Issuer: {:?}",
-                            String::from_utf8_lossy(raw_value)
-                        ),
-                        Attribute::Url(raw_value) => {
-                            println!("Private Key URL: {:?}", String::from_utf8_lossy(raw_value))
-                        }
-                        Attribute::Class(raw_value) => {
-                            println!("Private Key Class: {:?}", raw_value.to_string())
-                        }
-                        _ => {
-                            println!("Could not read attribute value: {:?}", v);
-                        }
-                    }
-                }
-            }
-            Err(err) => println!("Could not read value: {err:?}"),
-        };
-        // info
         let mechanism = self.get_mechanism().unwrap();
-        println!(
+
+        let (mechanism, digest_mechanism) = match mechanism {
+            Mechanism::EcdsaSha256 => (Mechanism::Ecdsa, Some(Mechanism::Sha256)),
+            Mechanism::EcdsaSha384 => (Mechanism::Ecdsa, Some(Mechanism::Sha384)),
+            Mechanism::EcdsaSha512 => (Mechanism::Ecdsa, Some(Mechanism::Sha512)),
+            Mechanism::Sha1RsaPkcs => (Mechanism::RsaPkcs, Some(Mechanism::Sha1)),
+            Mechanism::Sha256RsaPkcs => (Mechanism::RsaPkcs, Some(Mechanism::Sha256)),
+            Mechanism::Sha384RsaPkcs => (Mechanism::RsaPkcs, Some(Mechanism::Sha384)),
+            Mechanism::Sha512RsaPkcs => (Mechanism::RsaPkcs, Some(Mechanism::Sha512)),
+            _ => {
+                log::warn!("Warning: Unsupported mechanism, trying it out anyway. value={mechanism:?}");
+                (Mechanism::Ecdsa, Some(Mechanism::Sha256))
+            },
+        };
+
+        log::debug!(
             "Input message ({:?}): {:?}",
             mechanism,
             String::from_utf8_lossy(&message)
         );
 
-        // Optional
-        let direct_sign = true;
+        let direct_sign = digest_mechanism.is_none();
+        log::debug!("Direct sign: {direct_sign:?}");
 
         let signature_raw = if direct_sign {
+            log::debug!(
+                "Signing message (len={:?}):\n{:?}",
+                message.len(),
+                BASE64_STANDARD_NO_PAD.encode(&message)
+            );
             let signature_raw = match session.sign(&mechanism, key, &message) {
                 Ok(result) => result,
                 Err(err) => {
-                    println!("Failed to sign: {err:?}");
+                    log::error!("Failed to sign: {err:?}");
                     "".into()
                 }
             };
             signature_raw
         } else {
-            let digest = session.digest(&Mechanism::Sha256, &message).unwrap();
+            let digest = session.digest(&digest_mechanism.unwrap(), &message).unwrap();
             session.sign(&mechanism, key, &digest).unwrap()
         };
 
         // Split raw signature into r and s values (assuming 32 bytes each)
-        println!("Signature (raw) len={:?}", signature_raw.len());
+        log::debug!("Signature (raw) len={:?}", signature_raw.len());
         let r_bytes = signature_raw[0..32].to_vec();
         let s_bytes = signature_raw[32..].to_vec();
         let signature_asn1 = format_asn1_ecdsa_signature(&r_bytes, &s_bytes).unwrap();
-        println!("Encoded ASN.1 Signature: len={:?} {:?}", signature_asn1.len(), signature_asn1);
+        log::debug!("Encoded ASN.1 Signature: len={:?} {:?}", signature_asn1.len(), signature_asn1);
         Ok(signature_asn1)
     }
 
     fn scheme(&self) -> SignatureScheme {
-        println!("Using scheme: {:?}", self.scheme.as_str());
+        log::info!("Using Signature scheme: {:?}", self.scheme.as_str());
         self.scheme
     }
 }
 
 #[derive(Debug)]
-struct MySigningKey {
+struct ECSigningKey {
     pkcs11: PKCS11,
 }
 
-impl MySigningKey {
+impl ECSigningKey {
     fn supported_schemes(&self) -> &[SignatureScheme] {
         &[
-            SignatureScheme::RSA_PKCS1_SHA256,
-            SignatureScheme::RSA_PKCS1_SHA384,
-            SignatureScheme::RSA_PKCS1_SHA512,
-
-            SignatureScheme::RSA_PSS_SHA256,
-
             SignatureScheme::ECDSA_NISTP256_SHA256,
             SignatureScheme::ECDSA_NISTP384_SHA384,
             SignatureScheme::ECDSA_NISTP521_SHA512,
@@ -248,20 +215,20 @@ impl MySigningKey {
     }
 }
 
-impl SigningKey for MySigningKey {
+impl SigningKey for ECSigningKey {
     fn choose_scheme(&self, offered: &[SignatureScheme]) -> Option<Box<dyn Signer>> {
-        println!("Offered signature schemes. offered={:?}", offered);
+        log::debug!("Offered signature schemes. offered={:?}", offered);
         let supported = self.supported_schemes();
         for scheme in offered {
             if supported.contains(scheme) {
-                println!("Matching scheme: {:?}", scheme.as_str());
-                return Some(Box::new(MySigner {
+                log::debug!("Matching scheme: {:?}", scheme.as_str());
+                return Some(Box::new(PkcsSigner {
                     pkcs11: self.pkcs11.clone(),
                     scheme: *scheme,
                 }));
             }
         }
-        println!(
+        log::error!(
             "Could not find a matching signing scheme. offered={:?}",
             offered
         );
@@ -273,10 +240,54 @@ impl SigningKey for MySigningKey {
     }
 }
 
+//
+// RSA Signer
+//
+#[derive(Debug)]
+struct RSASigningKey {
+    pkcs11: PKCS11,
+}
+
+impl RSASigningKey {
+    fn supported_schemes(&self) -> &[SignatureScheme] {
+        &[
+            SignatureScheme::RSA_PKCS1_SHA256,
+            SignatureScheme::RSA_PKCS1_SHA384,
+            SignatureScheme::RSA_PKCS1_SHA512,
+            SignatureScheme::RSA_PSS_SHA256,
+        ]
+    }
+}
+
+impl SigningKey for RSASigningKey {
+    fn choose_scheme(&self, offered: &[SignatureScheme]) -> Option<Box<dyn Signer>> {
+        log::debug!("Offered signature schemes. offered={:?}", offered);
+        let supported = self.supported_schemes();
+        for scheme in offered {
+            if supported.contains(scheme) {
+                log::debug!("Matching scheme: {:?}", scheme.as_str());
+                return Some(Box::new(PkcsSigner {
+                    pkcs11: self.pkcs11.clone(),
+                    scheme: *scheme,
+                }));
+            }
+        }
+        log::debug!(
+            "Could not find a matching signing scheme. offered={:?}",
+            offered
+        );
+        None
+    }
+
+    fn algorithm(&self) -> SignatureAlgorithm {
+        SignatureAlgorithm::RSA
+    }
+}
+
 #[derive(Debug)]
 struct ClientCertResolver {
     chain: Vec<CertificateDer<'static>>,
-    signing_key: Arc<MySigningKey>,
+    signing_key: Arc<dyn SigningKey>,
 }
 
 impl ResolvesClientCert for ClientCertResolver {
@@ -297,6 +308,50 @@ impl ResolvesClientCert for ClientCertResolver {
     }
 }
 
+fn get_key_type(
+    pkcs11: PKCS11,
+) -> KeyType {
+    let session = pkcs11.session.lock().unwrap();
+
+        let key_template = vec![
+            Attribute::Token(true),
+            Attribute::Private(true),
+            Attribute::Sign(true),
+        ];
+
+        let key = session
+            .find_objects(&key_template)
+            .unwrap()
+            .into_iter()
+            .nth(0)
+            .unwrap();
+
+        let info = session.get_attributes(
+            key,
+            &[
+                AttributeType::KeyType,
+            ],
+        );
+        let mut key_type = KeyType::EC;
+        match info {
+            Ok(value) => {
+                for v in &value[0..value.len() - 1] {
+                    match v {
+                        Attribute::KeyType(raw_value) => {
+                            key_type = raw_value.clone();
+                        },
+                        _ => {
+                            log::warn!("Could not read attribute value: {:?}", v);
+                        }
+                    }
+                }
+            }
+            Err(err) => log::warn!("Could not read value: {err:?}"),
+        };
+
+        key_type
+}
+
 fn get_certificate_der(
     pkcs11: PKCS11,
 ) -> anyhow::Result<Vec<CertificateDer<'static>>, anyhow::Error> {
@@ -313,18 +368,20 @@ fn get_certificate_der(
     // Print out info about the certificate
     match value {
         Attribute::Value(cert) => {
-            println!("Certificate: {:?}", CertificateDer::from_slice(&cert));
+            log::trace!("Certificate: {:?}", CertificateDer::from_slice(&cert));
 
             let res = X509Certificate::from_der(&cert);
             match res {
                 Ok((_rem, cert)) => {
-                    println!(
-                        "Public Key: {:?}",
-                        cert.public_key().algorithm.algorithm.to_string()
-                    );
-                    println!("Subject: {:?}", cert.subject().to_string());
-                    println!("Issuer: {:?}", cert.issuer().to_string());
-                    println!("Serial: {:?}", cert.raw_serial_as_string().replace(":", ""));
+                    let cn = cert.subject().iter_common_name()
+                        .next()
+                        .and_then(|cn| cn.as_str().ok());
+                    if let Some(cn) = cn {
+                        log::info!("Common Name: {:?}", cn);
+                    }
+                    log::info!("Subject: {:?}", cert.subject().to_string());
+                    log::info!("Issuer: {:?}", cert.issuer().to_string());
+                    log::info!("Serial: {:?}", cert.raw_serial_as_string().replace(":", ""));
                 }
                 _ => panic!("x509 parsing failed: {:?}", res),
             }
@@ -338,48 +395,78 @@ fn get_certificate_der(
     }
 }
 
+fn get_certificate_common_name(c: CertificateDer<'static>) -> String {
+    let res = X509Certificate::from_der(&c);
+    match res {
+        Ok((_rem, cert)) => {
+            let cn = cert.subject().iter_common_name()
+                .next()
+                .and_then(|cn| cn.as_str().ok());
+            cn.unwrap().to_string()
+        }
+        _ => "".to_string(),
+    }
+}
+
+fn get_env_var(keys: Vec<&str>, default_value: &str) -> String {
+    let value = keys.iter().map(|key| std::env::var(key).ok()).skip_while(|value| !value.is_some()).next().unwrap_or(Some(default_value.to_string()));
+    value.unwrap_or(default_value.to_string())
+}
+
+
 #[tokio::main(flavor = "current_thread")]
 async fn main() -> Result<(), Box<dyn Error>> {
-    pretty_env_logger::init();
+    match std::env::var("RUST_LOG") {
+        Ok(_) => pretty_env_logger::init(),
+        _ => pretty_env_logger::formatted_builder().filter_level(log::LevelFilter::Info).init(),
+    }
+
+    // pretty_env_logger::init();
     color_backtrace::install();
 
-    let pkcs11module = std::env::var("PKCS11_MODULE");
-    let pkcs11module = pkcs11module
-        .as_deref()
-        .unwrap_or("/opt/homebrew/lib/pkcs11/opensc-pkcs11.so");
-    let pkcs11client = Pkcs11::new(pkcs11module)?;
-    pkcs11client.initialize(CInitializeArgs::OsThreads)?;
+    log::info!("Starting Test MQTT Client with PKCS#11 support enabled");
 
-    let slot = pkcs11client.get_slots_with_token()?.remove(0);
-    let session = pkcs11client.open_ro_session(slot)?;
-    let pkcs11pin = std::env::var("PKCS11_PIN");
-    let pkcs11pin = pkcs11pin
-        .as_deref()
-        .unwrap_or("123456");
-    session.login(UserType::User, Some(&AuthPin::new(pkcs11pin.into())))?;
 
-    // Debug
-    let search = vec![
-        Attribute::Class(ObjectClass::CERTIFICATE),
-        Attribute::CertificateType(CertificateType::X_509),
-    ];
-    for handle in session.find_objects(&search)? {
-        // each cert: get the "value" which will be the raw certificate data
-        for value in session.get_attributes(handle, &[AttributeType::SerialNumber])? {
-            if let Attribute::Value(value) = value {
-                match String::from_utf8(value) {
-                    Ok(path) => println!("Certificate value: {:?}", path),
-                    Err(e) => println!("Invalid UTF-8 sequence: {}", e),
-                };
-            }
-        }
-    }
+    let pkcs11_module = get_env_var(vec!["PKCS11_MODULE"], "/opt/homebrew/lib/pkcs11/opensc-pkcs11.so");
+    let pkcs11_client = Pkcs11::new(pkcs11_module.clone())?;
+    pkcs11_client.initialize(CInitializeArgs::OsThreads)?;
+
+    let slot = pkcs11_client.get_slots_with_token()?.remove(0);
+    let session = pkcs11_client.open_ro_session(slot)?;
+
+    let pkcs11_pin = get_env_var(vec!["PKCS11_PIN", "GNUTLS_PIN"], "123456");
+    log::info!(
+        "Logging into HSM using PKCS#11: module={:?}",
+        pkcs11_module,
+    );
+    session.login(UserType::User, Some(&AuthPin::new(pkcs11_pin.into())))?;
 
     let pkcs11 = PKCS11 {
         session: Arc::new(Mutex::new(session)),
     };
     let chain = get_certificate_der(pkcs11.clone())?;
-    let my_signing_key = Arc::new(MySigningKey { pkcs11 });
+
+    let mqtt_client_id = get_certificate_common_name(chain[0].clone());
+
+    let key_type = get_key_type(pkcs11.clone());
+    log::info!("Key Type: {:?}", key_type.to_string());
+    let client_cert_resolver = match key_type {
+        KeyType::EC => {
+            Arc::new(ClientCertResolver {
+                chain: chain,
+                signing_key: Arc::new(ECSigningKey { pkcs11 }),
+            })
+        },
+        KeyType::RSA => {
+            Arc::new(ClientCertResolver {
+                chain: chain,
+                signing_key: Arc::new(RSASigningKey { pkcs11 }),
+            })
+        },
+        _ => {
+            panic!("Unsupported key type. Only EC and RSA keys are supported");
+        },
+    };
 
     let mut root_cert_store = rumqttc::tokio_rustls::rustls::RootCertStore::empty();
     root_cert_store.add_parsable_certificates(
@@ -396,23 +483,17 @@ async fn main() -> Result<(), Box<dyn Error>> {
     // Create client using custom client cert resolver
     let client_config = ClientConfig::builder()
         .with_root_certificates(root_cert_store)
-        .with_client_cert_resolver(Arc::new(ClientCertResolver {
-            chain: chain,
-            signing_key: my_signing_key,
-        }));
+        .with_client_cert_resolver(client_cert_resolver);
 
-    let mqtt_client_id = std::env::var("DEVICE_ID");
-    let mqtt_client_id = mqtt_client_id.as_deref().unwrap_or("rmi_macos01");
+    let c8y_domain = get_env_var(vec!["TEDGE_C8Y_URL", "C8Y_DOMAIN", "C8Y_HOST", "C8Y_URL"], "thin-edge-io.eu-latest.cumulocity.com");
+    let c8y_domain = c8y_domain.replace("https://", "").replace("http://", "");
 
-    let c8y_domain = std::env::var("C8Y_DOMAIN");
-    let c8y_domain = c8y_domain
-        .as_deref()
-        .unwrap_or("thin-edge-io.eu-latest.cumulocity.com");
-
-    println!(
-        "Starting mqtt client: client_id={:?}, domain={:?}",
+    log::info!("----------------------------------------------------------------------------------------------------");
+    log::info!(
+        "Starting MQTT Test Client: client_id={:?}, domain={:?}",
         mqtt_client_id, c8y_domain
     );
+    log::info!("----------------------------------------------------------------------------------------------------");
     let mut mqttoptions = MqttOptions::new(mqtt_client_id, c8y_domain, 8883);
     mqttoptions.set_keep_alive(std::time::Duration::from_secs(60));
 
@@ -428,10 +509,10 @@ async fn main() -> Result<(), Box<dyn Error>> {
     loop {
         match eventloop.poll().await {
             Ok(v) => {
-                println!("Event = {v:?}");
+                log::info!("Event = {v:?}");
             }
             Err(e) => {
-                println!("Error = {e:?}");
+                log::error!("Error = {e:?}");
                 break;
             }
         }
@@ -458,8 +539,8 @@ async fn test_client_cert_signer() {
     let pkcs11 = PKCS11 {
         session: Arc::new(Mutex::new(session)),
     };
-    // let chain = get_certificate_der(pkcs11.clone()).unwrap();
-    let my_signing_key = Arc::new(MySigningKey { pkcs11 });
+
+    let my_signing_key = Arc::new(ECSigningKey { pkcs11 });
 
     let signer = my_signing_key
         .choose_scheme(&[SignatureScheme::ECDSA_NISTP256_SHA256])
