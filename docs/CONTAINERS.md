@@ -44,8 +44,9 @@ The PKCS#11 interface, which can be used to access HSMs, can be exposed to conta
     [Service]
     Type=simple
     StandardError=journal
-    #ExecStart=/usr/bin/p11-kit server -f -n %t/p11-kit/pkcs11 pkcs11:
-    ExecStart=/usr/bin/p11-kit server -f -u tedge -g tedge -n %t/p11-kit/pkcs11 pkcs11:model=PKCS%%2315%%20emulated;manufacturer=piv_II;serial=b98efbc09b13980d;token=rpi5-d83addab8e9f
+    ExecStart=/usr/bin/p11-kit server -f -u tedge -g tedge -n %t/p11-kit/pkcs11 pkcs11:model=PKCS%%2315%%20emulated;manufacturer=piv_II;
+    # Or use a more exact filter
+    #ExecStart=/usr/bin/p11-kit server -f -u tedge -g tedge -n %t/p11-kit/pkcs11 pkcs11:model=PKCS%%2315%%20emulated;manufacturer=piv_II;serial=b98efbc09b13980d;token=rpi5-d83addab8e9f
     Restart=on-failure
 
     [Install]
@@ -150,3 +151,47 @@ Token 0:
 TODO
 
 * Experiment changing tedge group id on initialization using `groupmod -g 992 tedge`, where the target gid id.
+
+
+## MacOS
+
+Running on MacOS has the additional complication that docker is running from within a virtual machine, so the p11-kit server (which runs on the host) needs to expose its unix socket to the virtual machine running the container engine (so the container can bind-mount the socket within the container).
+
+These instructions assume you already have `colima` installed on your Mac.
+
+1. In a new console, start the p11-kit server
+
+    ```sh
+    p11-kit server -f -n /tmp/pkcs11 "pkcs11:model=PKCS%2315%20emulated"
+    ```
+
+    If you're unsure on the url to use, try using `p11-kit` to list the modules and find the token related to your Yubikey:
+
+    ```sh
+    p11-kit list-modules
+    ```
+
+2. In a new console, use ssh to forward the p11-kit socket to the colima's virtual machine
+
+    Though you'll need to know colima's ssh port first, and the ssh key used by default:
+
+    ```sh
+    colima ssh-config
+    ```
+
+    Then add the ssh key to your ssh agent, then run the ssh command to forward the socket.
+
+    ```sh
+    ssh-add /Users/reubenmiller/.colima/_lima/_config/user
+    ssh \
+    -R /tmp/pkcs11:/tmp/pkcs11 \
+    127.0.0.1 -p 49267
+    ```
+
+3. Start the docker container
+
+    ```sh
+    cd rust/client
+    echo "C8Y_DOMAIN=example.c8y.io" >> .env
+    just run-docker
+    ```

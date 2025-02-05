@@ -1,0 +1,27 @@
+
+# build client (requires cargo-zigbuild)
+build:
+    cargo-zigbuild build --target=aarch64-unknown-linux-gnu --release
+
+# build docker container for arm64
+build-container: build
+    docker build --load -t pkcs11-client-test-arm64 -f debian.dockerfile .
+    docker image save pkcs11-client-test-arm64 | gzip > pkcs11-client-test-arm64.tar.gz
+
+    @echo
+    @echo "On MacOS"
+    @echo
+    @echo "  docker image load < pkcs11-client-test-arm64.tar.gz"
+    @echo "  docker run -it -v /tmp/pkcs11:/tmp/pkcs11 -e P11_KIT_SERVER_ADDRESS=unix:path=/tmp/pkcs11 -e C8Y_DOMAIN=\$(tedge config get c8y.url) --rm pkcs11-client-test-arm64"
+
+    @echo
+    @echo
+    @echo "On Linux"
+    @echo
+    @echo "  docker image load < pkcs11-client-test-arm64.tar.gz"
+    @echo "  docker run -it -v /run/p11-kit/pkcs11:/run/p11-kit/pkcs11 -e P11_KIT_SERVER_ADDRESS=unix:path=/run/p11-kit/pkcs11 -e C8Y_DOMAIN=\$(tedge config get c8y.url) --rm pkcs11-client-test-arm64"
+    @echo
+
+# Run in container
+run-container: build
+    docker compose up --build

@@ -1,0 +1,11 @@
+services:
+  client:
+    build:
+      context: .
+      dockerfile: debian.dockerfile
+    user: root
+    environment:
+      - P11_KIT_SERVER_ADDRESS=unix:path=/tmp/pkcs11
+      - C8Y_DOMAIN=${C8Y_DOMAIN:-}
+    volumes:
+      - /tmp/pkcs11:/tmp/pkcs11
