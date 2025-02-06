@@ -1,4 +1,13 @@
-FROM alpine:3.18
+FROM alpine:3.20 AS builder
+
+RUN apk add rust cargo nfpm
+WORKDIR /app
+COPY . .
+RUN cargo build --release
+
+
+#---------------------------------------------
+FROM alpine:3.20
 
 RUN apk add --no-cache \
         sudo \
@@ -12,7 +21,7 @@ RUN apk add --no-cache \
     && mkdir -p /etc/pkcs11/modules \
     && echo "module: /usr/lib/pkcs11/p11-kit-client.so" > /etc/pkcs11/modules/p11-kit-client.module
 
-COPY ./target/aarch64-unknown-linux-gnu/release/client /usr/bin/test-client
+COPY --from=builder /app/target/release/client /usr/bin/test-client
 COPY entrypoint.sh /usr/bin/entrypoint.sh
 
 ENV P11_KIT_SERVER_ADDRESS=unix:path=/run/pkcs11

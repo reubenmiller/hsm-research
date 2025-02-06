@@ -9,3 +9,4 @@ services:
       - C8Y_DOMAIN=${C8Y_DOMAIN:-}
     volumes:
       - /tmp/pkcs11:/tmp/pkcs11
+    # command: ["sleep", "infinity"]

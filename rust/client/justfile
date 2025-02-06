@@ -3,6 +3,9 @@
 build:
     cargo-zigbuild build --target=aarch64-unknown-linux-gnu --release
 
+build-musl:
+    RUSTFLAGS="-C target-feature=-crt-static" cargo-zigbuild build --target=aarch64-unknown-linux-musl --release
+
 # build docker container for arm64
 build-container: build
     docker build --load -t pkcs11-client-test-arm64 -f debian.dockerfile .
@@ -24,4 +27,7 @@ build-container: build
 
 # Run in container
 run-container: build
-    docker compose up --build
+    docker compose -f docker-compose.debian.yaml up --build
+
+run-container-alpine:
+    docker compose -f docker-compose.alpine.yaml up --build
