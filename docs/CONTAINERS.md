@@ -193,5 +193,5 @@ These instructions assume you already have `colima` installed on your Mac.
     ```sh
     cd rust/client
     echo "C8Y_DOMAIN=example.c8y.io" >> .env
-    just run-docker
+    just run-container-alpine
     ```
