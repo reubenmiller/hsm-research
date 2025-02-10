@@ -1,0 +1,21 @@
+services:
+  tedge:
+    build:
+      context: .
+      dockerfile: alpine.dockerfile
+      args:
+        - USERID=${USERID:-501}
+        - GROUPID=${GROUPID:-1000}
+    environment:
+      - P11_KIT_SERVER_ADDRESS=unix:path=/run/pkcs11
+      - TEDGE_C8Y_URL=${C8Y_DOMAIN:-}
+      - CERTPUBLIC=${CERTPUBLIC:-}
+    volumes:
+      - /tmp/pkcs11:/run/pkcs11
+      - device_certs:/etc/tedge/device-certs
+      - tedge_data:/data/tedge
+      - /var/run/docker.sock:/var/run/docker.sock:rw
+
+volumes:
+  device_certs:
+  tedge_data:
