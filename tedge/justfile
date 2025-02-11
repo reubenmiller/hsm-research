@@ -5,6 +5,9 @@ DEFAULT_OUTPUT_TYPE := "registry,dest=" + IMAGE + ".tar"
 USERID := "501"
 GROUPID := "1000"
 
+#PLATFORMS := "linux/arm/v6,linux/arm/v7,linux/amd64,linux/arm64"
+PLATFORMS := "linux/amd64,linux/arm64"
+
 build-setup:
     docker buildx install
     docker run --privileged --rm tonistiigi/binfmt --install all
@@ -17,7 +20,7 @@ build-setup:
 # See https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
 publish OUTPUT_TYPE=DEFAULT_OUTPUT_TYPE VERSION='latest': build-setup
     docker buildx build \
-        --platform linux/arm/v6,linux/arm/v7,linux/amd64,linux/arm64 \
+        --platform "$PLATFORMS" \
         --label "org.opencontainers.image.version={{VERSION}}" \
         --build-arg "USERID={{USERID}}" \
         --build-arg "GROUPID={{GROUPID}}" \
