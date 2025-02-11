@@ -23,7 +23,7 @@ publish OUTPUT_TYPE=DEFAULT_OUTPUT_TYPE VERSION='latest': build-setup
         --build-arg "GROUPID={{GROUPID}}" \
         -t "{{REGISTRY}}/{{REPO_OWNER}}/{{IMAGE}}:{{VERSION}}" \
         -t "{{REGISTRY}}/{{REPO_OWNER}}/{{IMAGE}}:latest" \
-        -f Dockerfile \
+        -f alpine.dockerfile \
         --output=type="{{OUTPUT_TYPE}}",oci-mediatypes=false \
         --provenance=false \
         .
