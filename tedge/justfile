@@ -20,7 +20,7 @@ build-setup:
 # See https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
 publish OUTPUT_TYPE=DEFAULT_OUTPUT_TYPE VERSION='latest': build-setup
     docker buildx build \
-        --platform "$PLATFORMS" \
+        --platform "{{PLATFORMS}}" \
         --label "org.opencontainers.image.version={{VERSION}}" \
         --build-arg "USERID={{USERID}}" \
         --build-arg "GROUPID={{GROUPID}}" \
