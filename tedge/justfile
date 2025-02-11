@@ -1,0 +1,29 @@
+REGISTRY := "ghcr.io"
+REPO_OWNER := "reubenmiller"
+IMAGE := "experiment-tedge-container-bundle"
+DEFAULT_OUTPUT_TYPE := "registry,dest=" + IMAGE + ".tar"
+USERID := "501"
+GROUPID := "1000"
+
+build-setup:
+    docker buildx install
+    docker run --privileged --rm tonistiigi/binfmt --install all
+
+# Publish docker images (multi-arch)
+# Example:
+#    just publish registry latest
+#    just publish registry 1.2.0
+# Use oci-mediatypes=false to improve compatibility with older docker versions, e.g. <= 19.0.x
+# See https://github.com/docker/buildx/issues/1964#issuecomment-1644634461
+publish OUTPUT_TYPE=DEFAULT_OUTPUT_TYPE VERSION='latest': build-setup
+    docker buildx build \
+        --platform linux/arm/v6,linux/arm/v7,linux/amd64,linux/arm64 \
+        --label "org.opencontainers.image.version={{VERSION}}" \
+        --build-arg "USERID={{USERID}}" \
+        --build-arg "GROUPID={{GROUPID}}" \
+        -t "{{REGISTRY}}/{{REPO_OWNER}}/{{IMAGE}}:{{VERSION}}" \
+        -t "{{REGISTRY}}/{{REPO_OWNER}}/{{IMAGE}}:latest" \
+        -f Dockerfile \
+        --output=type="{{OUTPUT_TYPE}}",oci-mediatypes=false \
+        --provenance=false \
+        .
