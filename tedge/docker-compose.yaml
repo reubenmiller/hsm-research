@@ -8,6 +8,7 @@ services:
         - GROUPID=${GROUPID:-1000}
     environment:
       - P11_KIT_SERVER_ADDRESS=unix:path=/run/pkcs11
+      - TEDGE_DEVICE_CRYPTOKI_PIN='"123456"'
       - TEDGE_C8Y_URL=${C8Y_DOMAIN:-}
       - CERTPUBLIC=${CERTPUBLIC:-}
     volumes:
