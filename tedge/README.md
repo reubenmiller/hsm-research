@@ -33,7 +33,7 @@
     p11-kit list-modules
     ```
 
-### Natively
+### Check 1: Access Yubikey directly from Host (via cryptoki API)
 
 To run it natively, you will need to install rust toolchain via [rustup](https://rustup.rs/) as you will need to build the package from source.
 
@@ -50,7 +50,11 @@ To run it natively, you will need to install rust toolchain via [rustup](https:/
 
     ```sh
     cargo build --release
+    ```
 
+1. Add the build output folder to the PATH variable so `tedge` can be access without relative addressing
+
+    ```sh
     export PATH=$(pwd)/target/release:$PATH
     ```
 
@@ -64,6 +68,7 @@ To run it natively, you will need to install rust toolchain via [rustup](https:/
     tedge config set device.cryptoki.enable true
     tedge config set device.cryptoki.pin 123456
     tedge config set mqtt.bridge.built_in true
+    tedge config set device.cryptoki.module_path "$(brew --prefix)/lib/libykcs11.dylib"
     ```
 
 1. Create a key pair using tedge (to allow for local debugging)
@@ -95,14 +100,20 @@ To run it natively, you will need to install rust toolchain via [rustup](https:/
     tedge disconnect c8y
     ```
 
-### Check 1: Access Yubikey directly (via cryptoki API)
-
-```sh
-tedge config set device.cryptoki.module_path "$(brew --prefix)/lib/libykcs11.dylib"
-tedge run tedge-mapper c8y
-```
 
 ### Check 2: Access Yubikey via the p11-kit server
+
+1. Configure thin-edge.io to use the p11-kit client module
+
+    ```sh
+    tedge config set device.cryptoki.module_path "$(brew --prefix)/lib/pkcs11/p11-kit-client.so"
+    ```
+
+    Note: It is recommended to check if the path exists, and if you can't find the `p11-kit-client.so`, then you could try searching for it using:
+
+    ```sh
+    find "$(brew --prefix)" -name "p11-kit-client.so"
+    ```
 
 1. Start the p11-kit server (which creates a unix socket which the p11-kit client will use)
 
@@ -110,23 +121,18 @@ tedge run tedge-mapper c8y
     p11-kit server -f -n /tmp/pkcs11 "pkcs11:model=PKCS%2315%20emulated"
     ```
 
-1. Configure tedge to use the p11-kit-client cryptoki library
+    Note: The last positional argument is the PKCS#11 uri which refers to your token on your machine which should match one of the token URI's from the `p11-kit list-modules` output.
+
+1. Configure tedge to use the p11-kit-client cryptoki library (the exact settings is printed on the console from the previous step)
 
     ```sh
-    tedge config set device.cryptoki.module_path "$(brew --prefix)/lib/pkcs11/p11-kit-client.so"
     P11_KIT_SERVER_ADDRESS=unix:path=/tmp/pkcs11; export P11_KIT_SERVER_ADDRESS;
-    ```
-
-    It is recommended to check if the path exists, and if you can't find the `p11-kit-client.so`, then you could try searching for it using:
-
-    ```sh
-    find "$(brew --prefix)" -name "p11-kit-client.so"
     ```
 
 1. Start the mapper manually
 
     ```sh
-    tedge run tedge-mapper c8y
+    tedge reconnect c8y
     ```
 
 
@@ -166,7 +172,7 @@ tedge run tedge-mapper c8y
 
     ```sh
     cat <<EOT >> .env
-    C8Y_DOMAIN=example.c8y.io
+    C8Y_DOMAIN=$C8Y_DOMAIN
     USERID=501
     GROUPID=1000
     CERTPUBLIC=$(cat "$(tedge config get device.cert_path)" | base64)
