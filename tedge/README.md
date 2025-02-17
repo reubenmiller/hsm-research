@@ -37,25 +37,17 @@
 
 To run it natively, you will need to install rust toolchain via [rustup](https://rustup.rs/) as you will need to build the package from source.
 
-1. Checkout the code
+1. Compile the tedge binary
 
     ```sh
-    git clone https://github.com/thin-edge/thin-edge.io.git
-    cd thin-edge.io
-    git fetch origin pull/3366/head:pr3366
-    git switch pr3366
+    cargo install tedge --git https://github.com/thin-edge/thin-edge.io.git --rev refs/pull/3366/head
     ```
 
-1. Build a local tedge binary and add tedge binary to `PATH` variable
+1. Override tedge homebrew binary with the manually built binary
 
     ```sh
-    cargo build --release
-    ```
-
-1. Add the build output folder to the PATH variable so `tedge` can be access without relative addressing
-
-    ```sh
-    export PATH=$(pwd)/target/release:$PATH
+    brew unlink tedge
+    cp "$HOME/.cargo/bin/tedge" "$(brew --prefix)/bin/tedge"
     ```
 
 1. Configure thin-edge.io to use certificates
@@ -129,10 +121,10 @@ To run it natively, you will need to install rust toolchain via [rustup](https:/
     P11_KIT_SERVER_ADDRESS=unix:path=/tmp/pkcs11; export P11_KIT_SERVER_ADDRESS;
     ```
 
-1. Start the mapper manually
+1. Start the mapper manually (as starting the service won't work as the `P11_KIT_SERVER_ADDRESS` environment variable won't be set for the `tedge-mapper` service as it is launched an independent process)
 
     ```sh
-    tedge reconnect c8y
+    tedge run tedge-mapper c8y
     ```
 
 
