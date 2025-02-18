@@ -10,10 +10,15 @@ on:
 
 jobs:
   push:
-    runs-on: ubuntu-latest
+    runs-on: ${{ matrix.job.runner }}
     permissions:
       contents: read
       packages: write
+    strategy:
+      matrix:
+        job:
+          - { platform: linux/arm64, image: "experiment-tedge-container-bundle-arm64", runner: "ubuntu-24.04-arm" }
+          - { platform: linux/amd64, image: "experiment-tedge-container-bundle-amd64", runner: "ubuntu-latest" }
 
     steps:
       - uses: actions/checkout@v4
@@ -33,5 +38,5 @@ jobs:
       - uses: taiki-e/install-action@just
 
       - name: Publish images
-        run: just publish registry ${{ inputs.VERSION || github.ref_name }}
+        run: just PLATFORMS=${{ matrix.job.platform }} IMAGE=${{ matrix.job.image }} publish registry ${{ inputs.VERSION || github.ref_name }}
         working-directory: ./tedge
