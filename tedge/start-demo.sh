@@ -66,8 +66,13 @@ check_dependency() {
 check_dependency p11-kit
 check_dependency docker
 
-if command -V "docker compose" >/dev/null 2>&1; then
-    echo "Error. Could not find docker compose. Please install it and try again" >&2
+if ! docker ps >/dev/null 2>&1; then
+    echo "Error. docker ps failed. Are you sure docker is running?" >&2
+    exit 1
+fi
+
+if ! docker compose --help >/dev/null 2>&1; then
+    echo "Error. docker compose failed. Please install it and try again" >&2
     exit 1
 fi
 
