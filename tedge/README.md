@@ -207,3 +207,49 @@ Try deleting the socket in the colima vm, or even change the name of the file.
 ```sh
 colima ssh -- sudo rm -rf /tmp/pkcs11
 ```
+
+## Experimental: Start demo using a script
+
+A start-demo.sh script has been added to help reduce the number of manual steps (this for developer usage only!).
+
+The script does the following steps:
+
+1. Stop any previously created p11-kit server processes, then starts a new one (in the background)
+1. Detect the relevant tedge settings e.g. c8y.url, public certificate (and converts it to base64 so it can be passed to the container as an environment variable)
+1. On MacOS, the p11-kit server socket will be forwarded to the colima virtual machine (if the `colima` command is found)
+1. Modify the permissions of the p11-kit server socket so that it can be accessed inside the container using the default user
+1. Start a container and mount the socket into it
+
+
+To run the script, it is assumed that you've already done the following:
+
+* Created the device certificate and uploaded to Cumulocity
+* Loaded the public and private key into your Yubikey
+
+Once you've done the above tasks, then you run the following steps:
+
+1. Install host dependencies
+
+    **MacOS**
+
+    ```sh
+    brew tap thin-edge/tedge
+    brew install tedge p11-kit ykman yubico-piv-tool
+    ```
+
+2. Activate your go-c8y-cli session for the tenant you want to connect to
+
+    ```sh
+    set-session
+    ```
+
+3. Run the demo (`sudo` will be called to managed the p11-kit server socket permissions)
+
+    **Note:** You will have to check the relevant PKCS#11 URI is associated to your token by running the `p11-kit list-modules` command (as the example below might not work for you):
+
+    ```sh
+    cd ./tedge
+    ./start-demo.sh --uri 'pkcs11:model=YubiKey%20YK5;'
+    ```
+
+    You can stop the setup by pressing `ctrl-c`. Do any changes, and re-run the script as before.
