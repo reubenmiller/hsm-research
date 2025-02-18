@@ -1,3 +1,9 @@
 target/
 *tar.gz
 .env
+
+device.csr*
+device.pem*
+public.key
+
+.DS_Store
