@@ -335,7 +335,7 @@ fn get_key_type(
         let mut key_type = KeyType::EC;
         match info {
             Ok(value) => {
-                for v in &value[0..value.len() - 1] {
+                for v in &value[0..value.len()] {
                     match v {
                         Attribute::KeyType(raw_value) => {
                             key_type = raw_value.clone();
