@@ -35,7 +35,7 @@ ENV TEDGE_DEVICE_CRYPTOKI_MODULE_PATH=/usr/lib/pkcs11/p11-kit-client.so
 
 # FIXME: Wrap pin in double quotes to prevent a parsing error
 # which will be fixed by https://github.com/thin-edge/thin-edge.io/issues/3394
-ENV TEDGE_DEVICE_CRYPTOKI_PIN='"123456"'
+ENV TEDGE_DEVICE_CRYPTOKI_PIN="123456"
 ENV TEDGE_MQTT_BRIDGE_BUILT_IN=true
 
 # Control uid and gid to allow a non-root user
