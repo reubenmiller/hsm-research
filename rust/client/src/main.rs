@@ -254,7 +254,6 @@ impl RSASigningKey {
             SignatureScheme::RSA_PKCS1_SHA256,
             SignatureScheme::RSA_PKCS1_SHA384,
             SignatureScheme::RSA_PKCS1_SHA512,
-            SignatureScheme::RSA_PSS_SHA256,
         ]
     }
 }
