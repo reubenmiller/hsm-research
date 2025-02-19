@@ -221,29 +221,80 @@ The script does the following steps:
 1. Start a container and mount the socket into it
 
 
-To run the script, it is assumed that you've already done the following:
-
-* Created the device certificate and uploaded to Cumulocity
-* Loaded the public and private key into your Yubikey
-
-Once you've done the above tasks, then you run the following steps:
+Note, the followings steps describes the entire process from creating the initial certificates to starting a container. So if you've done some of the steps already then you can skip over some of them, but if you run into troubles, then try resetting your Yubikey and starting again.
 
 1. Install host dependencies
 
     **MacOS**
 
     ```sh
-    brew tap thin-edge/tedge
-    brew install tedge p11-kit ykman yubico-piv-tool
+    brew install p11-kit ykman yubico-piv-tool
     ```
 
-2. Activate your go-c8y-cli session for the tenant you want to connect to
+1. Activate an existing [go-c8y-cli](https://goc8ycli.netlify.app/) session to the tenant you wish to connect to
 
     ```sh
     set-session
     ```
 
-3. Run the demo (`sudo` will be called to managed the p11-kit server socket permissions)
+    If you haven't created a go-c8y-cli session already, then run the following command:
+
+    ```sh
+    c8y sessions create
+    ```
+
+    Then run `set-session` afterwards to activate the session.
+
+1. Create a new local CA certificate (this will be used to sign CSRs coming from the HSM device)
+
+    ```sh
+    c8y tedge local-ca create
+    ```
+
+    If you don't have the `c8y tedge` command, then you will need to install and update it.
+
+    ```sh
+    c8y extension install thin-edge/c8y-tedge
+    c8y extensions update tedge
+    ```
+
+    Note: Don't worry about running this command again as it won't overwrite an existing local CA certificate.
+
+1. Generate a private key (in the Yubikey)
+
+    ```sh
+    ykman piv keys generate --algorithm ECCP256 9a public.key
+    ```
+
+    Note: The RSA algorithms are not currently supported as the there is a signing problem when the `*PSS*` style algorithms used in the TLS 1.3 handshake (e.g. `RSA_PSS_SHA256`, `RSA_PSS_SHA384` and `RSA_PSS_SHA512`).
+
+1. Set the desired device id of the device certificate (this will be used as the certificate's Common Name and used to identify the device)
+
+    ```sh
+    DEVICE_ID=rmi_hsm_0001
+    ```
+
+1. Create a Certificate Signing Request (CSR)
+
+    ```sh
+    ykman piv certificates request \
+        --subject "CN=${DEVICE_ID},OU=Test Device,O=Thin Edge" \
+        9a public.key - > device.csr
+    ```
+
+1. Sign the request to generate a device certificate (using a CA that you created in the previous steps)
+
+    ```sh
+    c8y tedge local-ca sign device.csr > device.pem
+    ```
+
+1. Save the certificate in the `.env` file (base64 encoded) as it will be used when starting the container
+
+    ```sh
+    echo "CERTPUBLIC=$(cat device.pem | base64)" >> .env
+    ```
+
+1. Run the demo (`sudo` will be called to managed the p11-kit server socket permissions)
 
     **Note:** You will have to check the relevant PKCS#11 URI is associated to your token by running the `p11-kit list-modules` command (as the example below might not work for you):
 
@@ -253,3 +304,12 @@ Once you've done the above tasks, then you run the following steps:
     ```
 
     You can stop the setup by pressing `ctrl-c`. Do any changes, and re-run the script as before.
+
+
+### Resetting your Yubikey
+
+If you're having problems with your Yubikey, or need to recreate the private key, then reset it first using:
+
+```sh
+ykman piv reset
+```

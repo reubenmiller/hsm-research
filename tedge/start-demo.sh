@@ -90,43 +90,6 @@ priority: 1
 EOT
         fi
     fi
-
-    HOST_TYPE=$(uname)
-    case "$HOST_TYPE" in
-        Darwin|darwin)
-            if [ -z "${TEDGE_CONFIG_DIR:-}" ]; then
-                TEDGE_CONFIG_DIR="$(brew --prefix)/etc/tedge"
-                echo "Exporting TEDGE_CONFIG_DIR=$TEDGE_CONFIG_DIR as it was not already set" >&2
-                export TEDGE_CONFIG_DIR
-            fi
-            ;;
-    esac
-
-    check_dependency "tedge"
-
-    # Add the public key as base64 inside the container by adding it to the .env file (used by docker compose)
-    if ! grep -q 'CERTPUBLIC=.*' .env >/dev/null 2>&1; then
-        DEVICE_CERT_PATH=$(tedge config get device.cert_path 2>/dev/null ||:)
-
-        if [ ! -f "$DEVICE_CERT_PATH" ]; then
-            tedge config get device.id >/dev/null 2>&1 || tedge cert create --device-id "$DEVICE_ID"
-            
-            if [ -n "$C8Y_DOMAIN" ]; then
-                tedge config set c8y.url "$C8Y_DOMAIN"
-            fi
-
-            tedge cert upload c8y || echo "Warning: Failed to upload tedge cert to $C8Y_DOMAIN" >&2
-        fi
-        CERT_PATH_BASE64=$(base64 < "$DEVICE_CERT_PATH")
-        echo "CERTPUBLIC=${CERT_PATH_BASE64}" >> .env
-    fi
-
-    # Move private key (if found)
-    DEVICE_KEY_PATH=$(tedge config get device.key_path 2>/dev/null ||:)
-    if [ -f "$DEVICE_KEY_PATH" ]; then
-        echo "Moving existing private key to '${DEVICE_KEY_PATH}.bak' to ensure it is not used by thin-edge.io" >&2
-        mv "$DEVICE_KEY_PATH" "${DEVICE_KEY_PATH}.bak"
-    fi
 }
 
 # Run setup checks
@@ -172,7 +135,7 @@ mkdir -p "$(dirname "$SOCKET_PATH")"
 SHELL_COMMANDS=$(p11-kit server --sh -n "$SOCKET_PATH" "$PKCS11_URI")
 eval "$SHELL_COMMANDS"
 
-echo "Changing p11-kit socket group ownership to match the container" >&2
+echo "Changing p11-kit socket group ownership to match the container (requires sudo permission)" >&2
 sudo chown ":${CONTAINER_GROUP_ID}" "$SOCKET_PATH"
 sudo chmod g+rw "$SOCKET_PATH"
 
