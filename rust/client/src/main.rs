@@ -271,9 +271,10 @@ impl SigningKey for RSASigningKey {
                 }));
             }
         }
-        log::debug!(
-            "Could not find a matching signing scheme. offered={:?}",
-            offered
+        log::error!(
+            "Could not find a matching signing scheme. offered={:?}, supported={:?}",
+            offered,
+            supported,
         );
         None
     }
