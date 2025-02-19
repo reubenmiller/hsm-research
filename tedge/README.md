@@ -208,27 +208,17 @@ Try deleting the socket in the colima vm, or even change the name of the file.
 colima ssh -- sudo rm -rf /tmp/pkcs11
 ```
 
-## Experimental: Start demo using a script
+## HSM Setup
 
-A start-demo.sh script has been added to help reduce the number of manual steps (this for developer usage only!).
+**pre-requisites**
 
-The script does the following steps:
+1. Install [go-c8y-cli](https://goc8ycli.netlify.app/docs/installation/shell-installation/) by following the websites instructions
 
-1. Stop any previously created p11-kit server processes, then starts a new one (in the background)
-1. Detect the relevant tedge settings e.g. c8y.url, public certificate (and converts it to base64 so it can be passed to the container as an environment variable)
-1. On MacOS, the p11-kit server socket will be forwarded to the colima virtual machine (if the `colima` command is found)
-1. Modify the permissions of the p11-kit server socket so that it can be accessed inside the container using the default user
-1. Start a container and mount the socket into it
-
-
-Note, the followings steps describes the entire process from creating the initial certificates to starting a container. So if you've done some of the steps already then you can skip over some of them, but if you run into troubles, then try resetting your Yubikey and starting again.
-
-1. Install host dependencies
-
-    **MacOS**
+1. Install the c8y-tedge go-c8y-cli extension
 
     ```sh
-    brew install p11-kit ykman yubico-piv-tool
+    c8y extension install thin-edge/c8y-tedge
+    c8y extensions update tedge
     ```
 
 1. Activate an existing [go-c8y-cli](https://goc8ycli.netlify.app/) session to the tenant you wish to connect to
@@ -237,13 +227,13 @@ Note, the followings steps describes the entire process from creating the initia
     set-session
     ```
 
-    If you haven't created a go-c8y-cli session already, then run the following command:
+    If you haven't created a go-c8y-cli session already for your Cumulocity tenant, then run the following command:
 
     ```sh
     c8y sessions create
     ```
 
-    Then run `set-session` afterwards to activate the session.
+    Then run `set-session` afterwards to activate the session. See the [go-c8y-cli docs](https://goc8ycli.netlify.app/docs/gettingstarted/#basics) for more details.
 
 1. Create a new local CA certificate (this will be used to sign CSRs coming from the HSM device)
 
@@ -253,12 +243,18 @@ Note, the followings steps describes the entire process from creating the initia
 
     If you don't have the `c8y tedge` command, then you will need to install and update it.
 
-    ```sh
-    c8y extension install thin-edge/c8y-tedge
-    c8y extensions update tedge
-    ```
-
     Note: Don't worry about running this command again as it won't overwrite an existing local CA certificate.
+
+
+### Yubikey
+
+1. Install the dependencies
+
+    **MacOS**
+
+    ```sh
+    brew install ykman yubico-piv-tool
+    ```
 
 1. Generate a private key (in the Yubikey)
 
@@ -294,22 +290,43 @@ Note, the followings steps describes the entire process from creating the initia
     echo "CERTPUBLIC=$(cat device.pem | base64)" >> .env
     ```
 
+Note: If you're having problems with your Yubikey, or need to recreate the private key, then reset it first using:
+
+```sh
+ykman piv reset
+```
+
+## Start demo using a script
+
+Note: Before you can use this section, check the [HSM Setup](#hsm-setup) section to ensure you've configured your HSM correctly.
+
+A start-demo.sh script has been added to help reduce the number of manual steps (this for developer usage only!).
+
+The script does the following steps:
+
+1. Stop any previously created p11-kit server processes, then starts a new one (in the background)
+1. Detect the relevant tedge settings e.g. c8y.url, public certificate (and converts it to base64 so it can be passed to the container as an environment variable)
+1. On MacOS, the p11-kit server socket will be forwarded to the colima virtual machine (if the `colima` command is found)
+1. Modify the permissions of the p11-kit server socket so that it can be accessed inside the container using the default user
+1. Start a container and mount the socket into it
+
+
+Note, the followings steps describes the entire process from creating the initial certificates to starting a container. So if you've done some of the steps already then you can skip over some of them, but if you run into troubles, then try resetting your Yubikey and starting again.
+
+1. Install the dependencies
+
+    **MacOS**
+
+    ```sh
+    brew install p11-kit
+    ```
+
 1. Run the demo (`sudo` will be called to managed the p11-kit server socket permissions)
 
     **Note:** You will have to check the relevant PKCS#11 URI is associated to your token by running the `p11-kit list-modules` command (as the example below might not work for you):
 
     ```sh
-    cd ./tedge
     ./start-demo.sh --uri 'pkcs11:model=YubiKey%20YK5;'
     ```
 
     You can stop the setup by pressing `ctrl-c`. Do any changes, and re-run the script as before.
-
-
-### Resetting your Yubikey
-
-If you're having problems with your Yubikey, or need to recreate the private key, then reset it first using:
-
-```sh
-ykman piv reset
-```
