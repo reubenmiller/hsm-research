@@ -5,7 +5,7 @@ WORKDIR /app
 RUN git clone https://github.com/thin-edge/thin-edge.io.git /app \
     && git fetch origin pull/3366/head:pr3366 \
     && git switch pr3366
-RUN cargo build --release --bin tedge
+RUN cargo build --release --bin tedge --features cryptoki
 
 #---------------------------------------------
 FROM ghcr.io/thin-edge/tedge-container-bundle:20250131.2034
