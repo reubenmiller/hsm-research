@@ -1,7 +1,7 @@
 #!/bin/sh
 set -e
 
-PKCS11_URI="${PKCS11_URI:-"pkcs11:model=PKCS%2315%20emulated"}"
+PKCS11_URI="${PKCS11_URI:-"pkcs11:model=YubiKey%20YK5"}"
 
 usage() {
     cat <<EOT >&2
@@ -132,6 +132,7 @@ SOCKET_PATH="/tmp/pkcs11"
 mkdir -p "$(dirname "$SOCKET_PATH")"
 
 # Start p11-kit server in the background
+echo "Starting p11-kit server: pkcs11_uri=$PKCS11_URI, socket=$SOCKET_PATH" >&2
 SHELL_COMMANDS=$(p11-kit server --sh -n "$SOCKET_PATH" "$PKCS11_URI")
 eval "$SHELL_COMMANDS"
 
