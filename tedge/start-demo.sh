@@ -116,7 +116,7 @@ if [ -z "$IMAGE" ]; then
     esac
 fi
 
-# docker pull "$IMAGE"
+docker pull "$IMAGE"
 if [ -z "$CONTAINER_GROUP_ID" ]; then
     echo "Detecting group id used the container" >&2
     CONTAINER_GROUP_ID=$(docker run --rm -it "$IMAGE" sh -c 'id -g' | tr -d '\r')
