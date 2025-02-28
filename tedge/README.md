@@ -52,6 +52,12 @@ Following the HSM specific instructions to generate the required private key in 
     brew install ykman yubico-piv-tool
     ```
 
+    **Debian**
+
+    ```sh
+    apt-get install -y python3-ykman
+    ```
+
 1. Generate a private key (in the Yubikey)
 
     ```sh
