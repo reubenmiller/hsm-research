@@ -84,6 +84,141 @@ The PKCS#11 interface, which can be used to access HSMs, can be exposed to conta
 
 ## Container examples
 
+### Using the community example package: tedge-p11-kit-server
+
+1. Install a pre-configured p11-kit server package
+
+    ```sh
+    apt-get install tedge-p11-kit-server gnutls-bin
+    ```
+
+1. List the tokens and their URI's, and note down the URI which is associated for the token that you wish to use
+
+    ```sh
+    p11tool --list-tokens
+    ```
+
+    *Example output*
+
+    ```sh
+    Token 0:
+        URL: pkcs11:model=p11-kit-trust;manufacturer=PKCS%2311%20Kit;serial=1;token=System%20Trust
+        Label: System Trust
+        Type: Trust module
+        Flags: uPIN uninitialized
+        Manufacturer: PKCS#11 Kit
+        Model: p11-kit-trust
+        Serial: 1
+        Module: p11-kit-trust.so
+
+
+    Token 1:
+        URL: pkcs11:model=PKCS%2315%20emulated;manufacturer=www.CardContact.de;serial=DENK0400089;token=SmartCard-HSM%20%28UserPIN%29
+        Label: SmartCard-HSM (UserPIN)
+        Type: Hardware token
+        Flags: RNG, Requires login
+        Manufacturer: www.CardContact.de
+        Model: PKCS#15 emulated
+        Serial: DENK0400089
+        Module: /usr/lib/aarch64-linux-gnu/pkcs11/opensc-pkcs11.so
+
+
+    Token 2:
+        URL: pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II;serial=00000000;token=PIV_II
+        Label: PIV_II
+        Type: Hardware token
+        Flags: RNG, Requires login
+        Manufacturer: piv_II
+        Model: PKCS#15 emulated
+        Serial: 00000000
+        Module: /usr/lib/aarch64-linux-gnu/pkcs11/opensc-pkcs11.so
+    ```
+
+1. Edit the configuration and add your desired PKCS11 token URI
+
+    ```sh
+    /etc/tedge-p11-kit-server/config.env
+    ```
+
+    *Example contents*
+
+    ```sh
+    TARGET_PKCS11_URI=pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II
+    ```
+
+1. Restart the tedge p11 kit service
+
+    ```sh
+    systemctl restart tedge-p11-kit-server.service
+    ```
+
+    You can check the status of the server and if the environment variables (read from the `config.env`) are interpreted correctly.
+
+    ```sh
+    # systemctl status tedge-p11-kit-server
+    ● tedge-p11-kit-server.service - tedge-p11-kit server
+        Loaded: loaded (/usr/lib/systemd/system/tedge-p11-kit-server.service; enabled; preset: enabled)
+        Active: active (running) since Fri 2025-02-28 11:53:59 GMT; 3min 22s ago
+    Invocation: 942e34b07f80469686c588cf96d10943
+    TriggeredBy: ● tedge-p11-kit-server.socket
+        Docs: man:p11-kit(8)
+    Main PID: 2461409 (p11-kit-server)
+        Tasks: 1 (limit: 4464)
+        Memory: 496K (peak: 4.5M)
+            CPU: 70ms
+        CGroup: /system.slice/tedge-p11-kit-server.service
+                └─2461409 server -f -u tedge -g tedge -n /run/tedge-p11-kit-server/pkcs11 "pkcs11:model=PKCS%2315%20emulated;manufacturer=piv_II"
+
+    Feb 28 11:53:59 rpi5-d83addab8e9f systemd[1]: Started tedge-p11-kit-server.service - tedge-p11-kit server.
+    Feb 28 11:53:59 rpi5-d83addab8e9f p11-kit[2461409]: P11_KIT_SERVER_ADDRESS=unix:path=/run/tedge-p11-kit-server/pkcs11; export P11_KIT_SERVER_ADDRESS;
+    Feb 28 11:53:59 rpi5-d83addab8e9f p11-kit[2461409]: P11_KIT_SERVER_PID=2461409; export P11_KIT_SERVER_PID;
+    ```
+
+1. Verify if the unix socket is accessible from the host
+
+    ```sh
+    CLIENT_SO_FILE=$(find /usr/lib -name p11-kit-client.so | head -n1)
+    sudo -u tedge sh -c "export P11_KIT_SERVER_ADDRESS=unix:path=/run/tedge-p11-kit-server/pkcs11; export P11_KIT_SERVER_PID=2449252; pkcs11-tool --module '$CLIENT_SO_FILE' --list-token-slots"
+    ```
+
+    *Example output*
+
+    ```sh
+    Available slots:
+    Slot 0 (0x11): Yubico YubiKey OTP+FIDO+CCID 01 00
+    token label        : PIV_II
+    token manufacturer : piv_II
+    token model        : PKCS#15 emulated
+    token flags        : login required, rng, token initialized, PIN initialized
+    hardware version   : 0.0
+    firmware version   : 0.0
+    serial num         : 00000000
+    pin min/max        : 4/8
+    ```
+
+1. Download the docker compose file
+
+    ```sh
+    wget https://raw.githubusercontent.com/reubenmiller/hsm-research/refs/heads/main/tedge/docker-compose.yaml
+    ```
+
+1. Configure the `.env` file with the settings that will be used by the docker compose file
+
+    **file: .env**
+
+    ```sh
+    CERTPUBLIC=<public_cert_pem_contents_base64_encoded>
+    SOCKET_PATH=/run/tedge-p11-kit-server/pkcs11
+    C8Y_DOMAIN=thin-edge-io.eu-latest.cumulocity.com
+    TEDGE_DEVICE_CRYPTOKI_PIN=123456
+    ```
+
+1. Start the container
+
+    ```sh
+    docker compose up
+    ```
+
 ### Debian (with non-root user)
 
 1. Start the container
