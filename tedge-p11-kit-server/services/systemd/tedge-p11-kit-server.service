@@ -1,0 +1,17 @@
+[Unit]
+Description=tedge-p11-kit server
+Documentation=man:p11-kit(8)
+
+Requires=tedge-p11-kit-server.socket
+
+[Service]
+Type=simple
+StandardError=journal
+# Env file is optional
+EnvironmentFile=-/etc/tedge-p11-kit-server/config.env
+ExecStart=/usr/bin/p11-kit server -f -u tedge -g tedge -n %t/tedge-p11-kit-server/pkcs11 "${TARGET_PKCS11_URI}"
+Restart=on-failure
+
+[Install]
+Also=tedge-p11-kit-server.socket
+WantedBy=default.target

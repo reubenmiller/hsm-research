@@ -1,0 +1,49 @@
+#!/bin/sh
+set -e
+
+#
+# Create host user
+#
+TARGET_USER=tedge
+TARGET_GROUP=tedge
+TARGET_USERID=999
+TARGET_GROUPID=992
+
+CURRENT_USERID=$(id -u "$TARGET_USER" ||:)
+CURRENT_GROUPID=$(id -g "$TARGET_GROUP" ||:)
+
+if [ -z "$CURRENT_GROUPID" ]; then
+    addgroup -g "$TARGET_GROUPID" -S "$TARGET_GROUP"
+elif [ "$CURRENT_GROUPID" != "$TARGET_GROUPID" ]; then
+    # modify existing group
+    groupmod -g "$TARGET_GROUPID" "$TARGET_GROUP"
+fi
+
+if [ -z "$CURRENT_USERID" ]; then
+    adduser -u "$TARGET_USERID" -g '' -H -D "TARGET_USER" -G "$TARGET_GROUP"
+elif [ "$CURRENT_USERID" != "$TARGET_USERID" ]; then
+    # modify existing user
+    usermod -u "$TARGET_USERID" "TARGET_USER"
+fi
+
+
+#
+# Configure OpenSC
+#
+OPEN_SC_MODULE=/usr/share/p11-kit/modules/opensc-pkcs11.module
+
+if [ ! -f "$OPEN_SC_MODULE" ]; then
+    CRYPTOKI_SO_FILE=$(find /usr/lib -name opensc-pkcs11.so || :)
+    if [ -n "$CRYPTOKI_SO_FILE" ]; then
+        echo "module: $CRYPTOKI_SO_FILE" > "$OPEN_SC_MODULE"
+    fi
+fi
+
+# Install service
+if command -V systemctl >/dev/null 2>&1; then
+    systemctl enable tedge-p11-kit-server.service ||:
+    if [ -d /run/systemd ]; then
+        systemctl daemon-reload ||:
+        systemctl start tedge-p11-kit-server.service ||:
+    fi
+fi

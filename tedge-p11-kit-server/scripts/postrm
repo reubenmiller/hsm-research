@@ -1,0 +1,12 @@
+#!/bin/sh
+set -e
+
+# Remove service
+if command -V systemctl >/dev/null 2>&1; then
+    systemctl unmask tedge-p11-kit-server.service ||:
+    systemctl disable tedge-p11-kit-server.service ||:
+    if [ -d /run/systemd ]; then
+        systemctl daemon-reload ||:
+        systemctl stop tedge-p11-kit-server.service ||:
+    fi
+fi

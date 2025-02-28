@@ -1,0 +1,18 @@
+set positional-arguments
+set dotenv-load
+set export
+
+SEMVER := env_var_or_default("SEMVER", "")
+
+# Remove local artifacts
+clean:
+    rm -f *.deb
+    rm -f *.rpm
+
+# Build packages
+build:
+    SEMVER={{SEMVER}} nfpm package -f nfpm.yaml --packager deb
+
+# Publish packages
+publish *ARGS:
+    ./ci/publish.sh {{ARGS}}
