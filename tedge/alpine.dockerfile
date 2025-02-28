@@ -10,8 +10,9 @@ RUN cargo build --release --bin tedge --features cryptoki
 #---------------------------------------------
 FROM ghcr.io/thin-edge/tedge-container-bundle:20250131.2034
 
-ARG USERID=1000
-ARG GROUPID=1000
+# Match default tedge uid/gid used by Yocto images
+ARG USERID=999
+ARG GROUPID=992
 
 USER root
 RUN apk add --no-cache \
