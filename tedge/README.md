@@ -269,3 +269,20 @@ Note: The followings steps describes the entire process from creating the initia
     ```sh
     docker compose up
     ```
+
+# Troubleshooting
+
+## Check if private key exists
+
+**On the Host**
+
+```sh
+GNUTLS_PIN=123456 p11tool --login --list-all-privkeys 'pkcs11:model=PKCS%2315%20emulated'
+```
+
+**In Container**
+
+```sh
+GNUTLS_PIN=123456 p11tool --login --list-all-privkeys 'pkcs11:model=PKCS%2315%20emulated'
+```
+
