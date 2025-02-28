@@ -91,7 +91,7 @@ Following the HSM specific instructions to generate the required private key in 
 1. Save the certificate in the `.env` file (base64 encoded) as it will be used when starting the container
 
     ```sh
-    echo "CERTPUBLIC=$(cat device.pem | base64)" >> .env
+    echo "CERTPUBLIC=$(cat device.pem | base64 | tr -d '\r\n')" >> .env
     ```
 
 Note: If you're having problems with your Yubikey, or need to recreate the private key, then reset it first using:
