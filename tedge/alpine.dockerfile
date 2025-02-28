@@ -2,9 +2,7 @@ FROM alpine:3.20 AS builder
 
 RUN apk add git rust cargo
 WORKDIR /app
-RUN git clone https://github.com/thin-edge/thin-edge.io.git /app \
-    && git fetch origin pull/3366/head:pr3366 \
-    && git switch pr3366
+RUN git clone https://github.com/thin-edge/thin-edge.io.git /app
 RUN cargo build --release --bin tedge --features cryptoki
 
 #---------------------------------------------
@@ -21,6 +19,8 @@ RUN apk add --no-cache \
         gcompat \
         libgcc \
         shadow \
+        # for debugging only
+        gnutls-utils\ 
     && mkdir -p /etc/pkcs11/modules \
     && echo "module: /usr/lib/pkcs11/p11-kit-client.so" > /etc/pkcs11/modules/p11-kit-client.module
 
