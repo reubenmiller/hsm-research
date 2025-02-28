@@ -3,12 +3,12 @@ services:
     image: ${IMAGE:-ghcr.io/reubenmiller/experiment-tedge-container-bundle-arm64:latest}
     pull_policy: always
     environment:
-      - P11_KIT_SERVER_ADDRESS=unix:path=/run/pkcs11
+      - P11_KIT_SERVER_ADDRESS=unix:path=/p11-kit/pkcs11
       - TEDGE_DEVICE_CRYPTOKI_PIN="${TEDGE_DEVICE_CRYPTOKI_PIN:-123456}"
       - TEDGE_C8Y_URL=${C8Y_DOMAIN:-}
       - CERTPUBLIC=${CERTPUBLIC:-}
     volumes:
-      - ${SOCKET_PATH:-/tmp/pkcs11}:/run/pkcs11
+      - ${SOCKET_PATH:-/tmp/pkcs11}:/p11-kit/pkcs11
       - device_certs:/etc/tedge/device-certs
       - tedge_data:/data/tedge
       - /var/run/docker.sock:/var/run/docker.sock:rw

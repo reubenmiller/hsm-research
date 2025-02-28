@@ -29,7 +29,7 @@ COPY --from=builder /app/target/release/tedge /usr/bin/tedge
 # overwrite existing init script
 COPY 50_configure.sh  /etc/cont-init.d/
 
-ENV P11_KIT_SERVER_ADDRESS=unix:path=/run/pkcs11
+ENV P11_KIT_SERVER_ADDRESS=unix:path=/p11-kit/pkcs11
 
 ENV TEDGE_DEVICE_CRYPTOKI_ENABLE=true
 ENV TEDGE_DEVICE_CRYPTOKI_MODULE_PATH=/usr/lib/pkcs11/p11-kit-client.so
