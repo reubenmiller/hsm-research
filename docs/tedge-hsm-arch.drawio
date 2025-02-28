@@ -1,6 +1,6 @@
-<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/132.0.0.0 Safari/537.36" version="26.0.13">
-  <diagram name="Page-1" id="YAwPFHxUQNysemsvbYTJ">
-    <mxGraphModel dx="2440" dy="1359" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/133.0.0.0 Safari/537.36" version="26.0.16" pages="2">
+  <diagram name="Architecture" id="YAwPFHxUQNysemsvbYTJ">
+    <mxGraphModel dx="1242" dy="819" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
       <root>
         <mxCell id="0" />
         <mxCell id="1" parent="0" />
@@ -148,7 +148,7 @@
         <mxCell id="G6yHNsuL1Snmdgs_8i90-101" value="Shared Object (.so)" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;" parent="G6yHNsuL1Snmdgs_8i90-36" vertex="1">
           <mxGeometry x="30" y="375" width="110" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-1" value="Legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" vertex="1" parent="G6yHNsuL1Snmdgs_8i90-36">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-1" value="Legend" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontStyle=1" parent="G6yHNsuL1Snmdgs_8i90-36" vertex="1">
           <mxGeometry x="10" y="350" width="70" height="30" as="geometry" />
         </mxCell>
         <mxCell id="G6yHNsuL1Snmdgs_8i90-66" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Build Challenges&lt;/h1&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;* Do we want to also build glibc in addition to musl builds?&lt;/p&gt;&lt;p&gt;&amp;nbsp; &amp;nbsp;* zigbuild can be used to control the glibc version, e.g. 2.17 so it is very compatible, but it can&#39;t be used to build all targets (but the main ones at least)&lt;/p&gt;&lt;p&gt;&amp;nbsp; &amp;nbsp; * do we want to depend on cargo-zigbuild (and ziglang) to build our project?&lt;/p&gt;&lt;p&gt;* Building crypto libraries is very difficult at this point in time (ring is actually better than aws-lc-rs!), and building for both musl and glibc is not a guarantee&lt;br&gt;&lt;br&gt;* yocto builds produce glibc compiled binaries&lt;br&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Some MUSL limitations&lt;/b&gt;&lt;/p&gt;&lt;p&gt;* No support for NSS (Name Service Switch) - Fedora IoT users issue (https://github.com/thin-edge/thin-edge.io/issues/2042)&lt;/p&gt;&lt;p&gt;* Can&#39;t load shared library objects (though maybe this is the last one?)&lt;/p&gt;&lt;p&gt;* less compatible with other tooling, e.g. proxychains-ng (to support proxies without having)&lt;/p&gt;&lt;p&gt;&lt;br&gt;&lt;/p&gt;&lt;p&gt;&lt;b&gt;Useful links&lt;/b&gt;&lt;/p&gt;&lt;p&gt;How other people do it - python wheel packaging - https://github.com/pypa/manylinux&lt;/p&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
@@ -277,89 +277,136 @@
         <mxCell id="G6yHNsuL1Snmdgs_8i90-140" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" parent="G6yHNsuL1Snmdgs_8i90-130" source="G6yHNsuL1Snmdgs_8i90-137" target="G6yHNsuL1Snmdgs_8i90-139" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-32" value="Option 1b: Device (host)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-32" value="Option 1b: Device (host)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="730" y="290" width="500" height="280" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-33" value="HSM" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-32">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-33" value="HSM" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-32" vertex="1">
           <mxGeometry x="10" y="35" width="90" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-34" value="cryptoki (PKCS#11)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-35" target="7khb8DyhQR_v5AJTT8p7-33">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-34" value="cryptoki (PKCS#11)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-35" target="7khb8DyhQR_v5AJTT8p7-33" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-35" value="p11-kit&lt;br&gt;&lt;div&gt;server&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-32">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-35" value="p11-kit&lt;br&gt;&lt;div&gt;server&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-32" vertex="1">
           <mxGeometry x="10" y="125" width="90" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-36" value="Alpine Linux Container (musl non-static)" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-32">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-36" value="Alpine Linux Container (musl non-static)" style="swimlane;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-32" vertex="1">
           <mxGeometry x="150" y="95" width="330" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-37" value="tedge&lt;div&gt;(musl*&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-36">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-37" value="tedge&lt;div&gt;(musl*&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;)&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-36" vertex="1">
           <mxGeometry x="240" y="57.5" width="80" height="65" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-38" value="pkcs#11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;fontSize=10;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-36" source="7khb8DyhQR_v5AJTT8p7-37" target="7khb8DyhQR_v5AJTT8p7-39">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-38" value="pkcs#11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;fontSize=10;" parent="7khb8DyhQR_v5AJTT8p7-36" source="7khb8DyhQR_v5AJTT8p7-37" target="7khb8DyhQR_v5AJTT8p7-39" edge="1">
           <mxGeometry relative="1" as="geometry">
             <mxPoint x="1220" y="235" as="sourcePoint" />
             <mxPoint x="1140" y="235" as="targetPoint" />
           </mxGeometry>
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-39" value="p11 client&lt;div&gt;.so&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-36">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-39" value="p11 client&lt;div&gt;.so&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-36" vertex="1">
           <mxGeometry x="120" y="72.5" width="60" height="35" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-35" target="7khb8DyhQR_v5AJTT8p7-41">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-40" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-35" target="7khb8DyhQR_v5AJTT8p7-41" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-41" value="unix socket" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;rotation=90;horizontal=0;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-32">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-41" value="unix socket" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;rotation=90;horizontal=0;" parent="7khb8DyhQR_v5AJTT8p7-32" vertex="1">
           <mxGeometry x="140" y="145" width="30" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-42" value="pkcs#11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-39" target="7khb8DyhQR_v5AJTT8p7-41">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-42" value="pkcs#11" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-32" source="7khb8DyhQR_v5AJTT8p7-39" target="7khb8DyhQR_v5AJTT8p7-41" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-43" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Option 1b: Use Alpine Linux container and build within container&lt;br&gt;&lt;/h1&gt;&lt;div&gt;Use p11-kit server/client which communicates via a unix socket to the host to access the HSMs.&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;See&amp;nbsp;https://p11-glue.github.io/p11-glue/p11-kit/manual/remoting.html&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Advantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* No custom software (only to interface with the cryptoki library)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Disadvantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;* Need to change to build tedge inside the alpine container - Compiling under multi-arch docker buildx generally does not work due to the long compile times due to the CPU emulation (build times &amp;gt; 1 hour per arch) and generally OOM errors can stop the build before completion (using &quot;-j 1&quot; does not always avoid OOM errors).&lt;br&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-43" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Option 1b: Use Alpine Linux container and build within container&lt;br&gt;&lt;/h1&gt;&lt;div&gt;Use p11-kit server/client which communicates via a unix socket to the host to access the HSMs.&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;See&amp;nbsp;https://p11-glue.github.io/p11-glue/p11-kit/manual/remoting.html&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Advantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* No custom software (only to interface with the cryptoki library)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Disadvantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;* Need to change to build tedge inside the alpine container - Compiling under multi-arch docker buildx generally does not work due to the long compile times due to the CPU emulation (build times &amp;gt; 1 hour per arch) and generally OOM errors can stop the build before completion (using &quot;-j 1&quot; does not always avoid OOM errors).&lt;br&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="740" y="610" width="470" height="400" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-44" value="Option 3: Device (host)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-44" value="Option 3: Device (host)" style="swimlane;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" parent="1" vertex="1">
           <mxGeometry x="1460" y="300" width="480" height="280" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-45" value="HSM" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-44">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-45" value="HSM" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-44" vertex="1">
           <mxGeometry x="10" y="35" width="90" height="30" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-46" value="cryptoki (PKCS#11)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-44" source="7khb8DyhQR_v5AJTT8p7-47" target="7khb8DyhQR_v5AJTT8p7-45">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-46" value="cryptoki (PKCS#11)" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-44" source="7khb8DyhQR_v5AJTT8p7-47" target="7khb8DyhQR_v5AJTT8p7-45" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-47" value="tedge cryptoki&lt;div&gt;service&lt;div&gt;(libc)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-44">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-47" value="tedge cryptoki&lt;div&gt;service&lt;div&gt;(libc)&lt;/div&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-44" vertex="1">
           <mxGeometry x="10" y="110" width="90" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-48" value="Alpine Linux Container (musl)" style="swimlane;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-44">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-48" value="Alpine Linux Container (musl)" style="swimlane;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-44" vertex="1">
           <mxGeometry x="190" y="95" width="270" height="170" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-49" value="unix socket" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;rotation=90;horizontal=0;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-48">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-49" value="unix socket" style="shape=cylinder3;whiteSpace=wrap;html=1;boundedLbl=1;backgroundOutline=1;size=15;rotation=90;horizontal=0;" parent="7khb8DyhQR_v5AJTT8p7-48" vertex="1">
           <mxGeometry x="-20" y="30" width="40" height="120" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-50" value="rpc: verify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-48" source="7khb8DyhQR_v5AJTT8p7-51" target="7khb8DyhQR_v5AJTT8p7-49">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-50" value="rpc: verify" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0;exitY=0.5;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-48" source="7khb8DyhQR_v5AJTT8p7-51" target="7khb8DyhQR_v5AJTT8p7-49" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-51" value="tedge&lt;div&gt;(musl)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-48">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-51" value="tedge&lt;div&gt;(musl)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-48" vertex="1">
           <mxGeometry x="140" y="57.5" width="120" height="65" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-52" value="&lt;div&gt;tedge&lt;/div&gt;client" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="7khb8DyhQR_v5AJTT8p7-48">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-52" value="&lt;div&gt;tedge&lt;/div&gt;client" style="rounded=0;whiteSpace=wrap;html=1;" parent="7khb8DyhQR_v5AJTT8p7-48" vertex="1">
           <mxGeometry x="140" y="73.75" width="40" height="32.5" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" edge="1" parent="7khb8DyhQR_v5AJTT8p7-44" source="7khb8DyhQR_v5AJTT8p7-47" target="7khb8DyhQR_v5AJTT8p7-49">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-53" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;entryPerimeter=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;startArrow=classic;startFill=1;" parent="7khb8DyhQR_v5AJTT8p7-44" source="7khb8DyhQR_v5AJTT8p7-47" target="7khb8DyhQR_v5AJTT8p7-49" edge="1">
           <mxGeometry relative="1" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-54" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Option 3: Custom cryptoki proxy service&lt;br&gt;&lt;/h1&gt;&lt;div&gt;Create client which can act as a proxy between a unix socket (used by tedge) and the cryptoki libraries. It must be compiled with glibc so it can load the shared objects.&lt;br&gt;&lt;br&gt;There is an existing project which provides such a service, called &quot;parsec&quot; (https://parallaxsecond.github.io/parsec-book/) which provides a unix socket, and a custom client library to interact with different HSMs (via PKCS#11 and other providers)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Advantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* No change in build targets (keep with musl)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Disadvantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* Need to worry about security of the unix socket (is just protecting the socket good enough)?&lt;/div&gt;&lt;div&gt;* Socket ownership is still challenging when using non-root users inside the container&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* How to manage the service on the host? (e.g. updating etc.)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-54" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Option 3: Custom cryptoki proxy service&lt;br&gt;&lt;/h1&gt;&lt;div&gt;Create client which can act as a proxy between a unix socket (used by tedge) and the cryptoki libraries. It must be compiled with glibc so it can load the shared objects.&lt;br&gt;&lt;br&gt;There is an existing project which provides such a service, called &quot;parsec&quot; (https://parallaxsecond.github.io/parsec-book/) which provides a unix socket, and a custom client library to interact with different HSMs (via PKCS#11 and other providers)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Advantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* No change in build targets (keep with musl)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;&lt;b&gt;Disadvantages&lt;/b&gt;&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* Need to worry about security of the unix socket (is just protecting the socket good enough)?&lt;/div&gt;&lt;div&gt;* Socket ownership is still challenging when using non-root users inside the container&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* How to manage the service on the host? (e.g. updating etc.)&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="1460" y="620" width="380" height="440" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-55" value="Implementation plan" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-55" value="Implementation plan" style="text;html=1;align=center;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;fillColor=#f5f5f5;strokeColor=#666666;fontColor=#333333;" parent="1" vertex="1">
           <mxGeometry x="730" y="100" width="1240" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-56" value="Phase 1 - Load .so module directly in tedge" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-56" value="Phase 1 - Load .so module directly in tedge" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;" parent="1" vertex="1">
           <mxGeometry x="730" y="170" width="610" height="50" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-57" value="Phase 2 - Load .so module in new tedge-cryptoki provider" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-57" value="Phase 2 - Load .so module in new tedge-cryptoki provider" style="text;html=1;align=left;verticalAlign=middle;whiteSpace=wrap;rounded=0;fontSize=29;" parent="1" vertex="1">
           <mxGeometry x="1460" y="170" width="610" height="80" as="geometry" />
         </mxCell>
-        <mxCell id="7khb8DyhQR_v5AJTT8p7-58" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Notes&lt;/h1&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Phase 3:&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* Support parsec (in addition to the &quot;tedge cryptoki client&quot;)?&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" vertex="1" parent="1">
+        <mxCell id="7khb8DyhQR_v5AJTT8p7-58" value="&lt;h1 style=&quot;margin-top: 0px;&quot;&gt;Notes&lt;/h1&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;Phase 3:&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;* Support parsec (in addition to the &quot;tedge cryptoki client&quot;)?&lt;/div&gt;&lt;div&gt;&lt;br&gt;&lt;/div&gt;" style="text;html=1;whiteSpace=wrap;overflow=hidden;rounded=0;" parent="1" vertex="1">
           <mxGeometry x="2130" y="470" width="380" height="440" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+  <diagram id="6Sd4CxLUMhpZO4mJBVmk" name="Packaging">
+    <mxGraphModel dx="994" dy="655" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1654" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-3" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-1" target="Jg9mJooc1mO2tVkDPt10-2">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-1" value="tedge-container-bundle&lt;div&gt;&lt;br&gt;&lt;/div&gt;&lt;div&gt;(no PKCS11 support)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="240" y="280" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-5" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-2" target="Jg9mJooc1mO2tVkDPt10-4">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-8" style="rounded=0;orthogonalLoop=1;jettySize=auto;html=1;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-2" target="Jg9mJooc1mO2tVkDPt10-7">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-12" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.5;entryY=1;entryDx=0;entryDy=0;exitX=0.75;exitY=0;exitDx=0;exitDy=0;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-2" target="Jg9mJooc1mO2tVkDPt10-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-2" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;tedge-container-bundle&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;With PKCS11&amp;nbsp;Enabled&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="440" y="400" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-4" value="&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;tedge-container-bundle&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;&lt;br&gt;&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;With PKCS11 Enabled +&lt;/span&gt;&lt;/div&gt;&lt;div&gt;&lt;span style=&quot;background-color: transparent; color: light-dark(rgb(0, 0, 0), rgb(255, 255, 255));&quot;&gt;Customer Apps&lt;/span&gt;&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="650" y="530" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-10" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.25;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-7" target="Jg9mJooc1mO2tVkDPt10-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="xjz0RAIh2suc-QlEAIFw-1" value="" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-7" target="Jg9mJooc1mO2tVkDPt10-11">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-7" value="p11-kit server" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;" vertex="1" parent="1">
+          <mxGeometry x="477" y="170" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-9" value="HSM&lt;div&gt;(PKCS11 Interface to HSM)&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+          <mxGeometry x="514" y="10" width="150" height="80" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-13" style="edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;jettySize=auto;html=1;entryX=0.75;entryY=1;entryDx=0;entryDy=0;" edge="1" parent="1" source="Jg9mJooc1mO2tVkDPt10-11" target="Jg9mJooc1mO2tVkDPt10-9">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="Jg9mJooc1mO2tVkDPt10-11" value="tedge-cryptoki&lt;div&gt;service&lt;/div&gt;" style="rounded=0;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fillStyle=hatch;" vertex="1" parent="1">
+          <mxGeometry x="650" y="170" width="150" height="80" as="geometry" />
         </mxCell>
       </root>
     </mxGraphModel>
