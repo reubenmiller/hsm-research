@@ -7,3 +7,8 @@ device.pem*
 public.key
 
 .DS_Store
+
+# artifacts
+*.deb
+*.rpm
+*.apk
