@@ -80,6 +80,8 @@ Following the HSM specific instructions to generate the required private key in 
     c8y tedge local-ca sign device.csr > device.pem
     ```
 
+    **Note:** If you are on a device, then you can copy the device.csr from the device, sign the cert on your local machine, then copy back the certificate.
+
 1. Save the certificate in the `.env` file (base64 encoded) as it will be used when starting the container
 
     ```sh
